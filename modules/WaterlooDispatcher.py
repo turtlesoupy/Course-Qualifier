@@ -156,21 +156,15 @@ class WaterlooDispatcher( Dispatcher.Dispatcher ):
             self.html = html
 
 
-
-    def dispatch( self ):
+    def threadedHTMLFetch(self, graduate=False):
         totalTimeout = 20.0
-
-        toQualify = [] 
-        toSearch = []
-        allCourses = []
-
         htmlThreads = []
         htmlList = []
-        #Tidy up this later
+
         for desiredCourse in self.desiredCourses:
-            yatta = self.HTMLFetchThread( self.postURL, self.session, desiredCourse )
-            yatta.start()
-            htmlThreads.append( yatta )
+            t = self.HTMLFetchThread( self.postURL, self.session, desiredCourse )
+            t.start()
+            htmlThreads.append(t)
 
         for thread in htmlThreads:
             startTime = time.time()
@@ -184,6 +178,17 @@ class WaterlooDispatcher( Dispatcher.Dispatcher ):
         if totalTimeout < 0:
             raise QualifierExceptions.QualifierException( "Timeout when communicating to Waterloo servers \n Is the Waterloo website down?")
 
+        return htmlList
+
+
+    def dispatch(self):
+        totalTimeout = 20.0
+
+        toQualify = [] 
+        toSearch = []
+        allCourses = []
+
+        htmlList = self.threadedHTMLFetch(False)
         for desiredCourse, realHtml in zip(self.desiredCourses, htmlList):
             #html = self.getHTML( desiredCourse )
             html = realHtml
@@ -197,6 +202,7 @@ class WaterlooDispatcher( Dispatcher.Dispatcher ):
                 except QualifierExceptions.CourseMissingException:
                     logging.warning( "Unable to find any courses to match %s %s" % (desiredCourse.subject, desiredCourse.code ) )
                     continue
+
 	    if desiredCourse.doSearch:
 		    groups = []
 		    for k,g in itertools.groupby(courseObjects, lambda x:x.courseName): #Pairing AMATH 250 LEC with TUT
