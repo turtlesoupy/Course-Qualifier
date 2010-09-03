@@ -1,0 +1,130 @@
+Changelog:
+---------------------
+/ November 21, 2009 /
+---------------------
+- Fixed a bug that would return nothing if two required sections were held for the same
+  lecture
+
+--------------------
+/ October 10, 2009 /
+--------------------
+- Added elective search support. Want to know what arts courses fit into your schedule?
+  type "ARTS" as the name and "*" as the code.
+
+--------------------
+/ March 14, 2009   /
+--------------------
+- Fixed a bug that didn't allow multiple times for a single course per day
+- Fixed a bug where certain evening classes showed as morning and vice-versa
+  (I have to guess at this because waterloo specifies times in 12-hour clock with
+   no AM/PM. Amazing)
+- Happy \pi day!
+
+--------------------
+/ January 28, 2009 /
+-------------------
+- Fixed Safari bugs on stats page and main page
+- Renamed a few of the columns (e.g. Average Idle Time -> Time between classes)
+- Made the timetable default to the first row after a request
+- Fixed a bug where courses running at different times on different days of the
+  week were not picked up
+
+--------------------
+/ January 11, 2009 /
+-------------------
+- Added links to the rate my professor page for a given professor
+
+--------------------
+/ January 7, 2009 /
+-------------------
+- Fixed confusion with start times, a class from 11:30-12:20 will now fit
+  the 11:30 slot and the 12:00 slot but not the 12:30
+- Added start times to the list of related info about the class
+
+--------------------
+/ November 3, 2008 /
+-------------------
+- Added "Show full courses" (defaulted to yes) into advanced options
+- Added back "lateness" into the computed metrics. This how close you are
+  to having all classes start at midnight (thanks to Jordan Macdonald for
+  both)
+
+--------------------
+/ October 14, 2008 /
+------------------
+Code has been entirely rewritten. If I can remember:
+
+Back end:
+- Full rewrite
+- Supports graduate courses (this is transparent)
+- Logs all requests to generate statistics (user viewable)
+- JSON is used for all communications back and forth
+- Rate My Professors data is maintained in a database and displayed via
+  the average rate my professors metric in the front end
+- Added the "required days" metric 
+- Supports Saturday/Sunday courses
+- Added "Blow up" detection. A innocent sounding courseload like MATH 136, 
+  MATH 138, ECON 101 can result in over 250,000 schedules. Rather than
+  melt servers, I now display an error message telling you of the foolishness
+- Added "Add Course" for those of us taking over 6 courses
+
+Front end:
+- Full rewrite, switched from the Dojo Javascript toolkit to the
+  Yahoo! User Interface Library
+- Added the "Advanced Options" popup (most people won't need it)
+- Supports restriction of specific sections, say MATH 135 section 101 and
+  tutorial 001
+- By popular request added a PDF version of the schedules
+- Made a nicer detailed display of courses (seeing the section number, etc.)
+- De-pompousified the description of the course qualifier
+
+Bugs fixed:
+????
+
+Bugs introduced:
+...
+
+Here is the technology spew used:
+- Python
+- Beautiful Soup (this software is great)
+- Sqlite
+- YUI javascript library
+- JSON
+- Reportlab
+- Mako templating engine
+
+---------------
+/ May 25, 2008 /
+--------------
+Features Added:
+- Did a version bump on all the "session" parameters to reflect upcoming
+terms. Also, I'm using the names instead of the seemingly random numbers
+Waterloo assigns.
+
+Notes:
+- Has been almost a year now with no major updates (my last co-op ate up a lot
+of time). In one way it is good that the program has held up, but in another
+way I'd like to make some bigger changes. I have a new version in development
+with some nice backend changes, but the latest version of the Dojo toolkit
+hasn't impressed me with the quality of the grid widget. I'm going to look
+into using the Yahoo Ajax Toolkit before making a call.
+
+- Next version should have support for Laurier courses as well.
+
+ --------------
+/June 22, 2007/
+-------------
+Bugs fixed:
+-Fixed timer when "double" clicking the make it so button. Now counts at an 
+ accurate rate (thanks Ivan Joukov)
+-Will now abort previous request when a new request is made (thanks Ivan Joukov)
+-Fixed lumping of non-lecture, non-tutorial, non-test courses into one column 
+ (thanks Stan Nikiforov)
+-Finally fixed the annoying issue of classes with staggered lecture
+ times not being displayed correctly (thanks Robert Burke and Abinav Patel)
+
+New features:
+-Added option of hiding distance education courses
+-Started this changelog :)
+
+Notes: Probably the last version without a major restructure
