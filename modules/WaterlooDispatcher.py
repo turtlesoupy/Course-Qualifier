@@ -42,7 +42,6 @@ class WaterlooDesiredCourse:
             if len( self.code ) < 3:
                 raise QualifierExceptions.InvalidInput()
 
-
     def __cmp__( self, other ):
         return cmp(str(self), str( other ) )
 
@@ -52,8 +51,33 @@ class WaterlooDesiredCourse:
     def __str__( self ):
         return "%s %s" % ( self.subject, self.code )
 
-class WaterlooDispatcher( Dispatcher.Dispatcher ):
+class HTMLFetchThread( threading.Thread ):
+    def __init__(self, postURL, session, course, graduate=False):
+        self.postURL = postURL
+        self.session = session
+        self.course = course
+        self.graduate = graduate
+        self.html = ""
+        threading.Thread.__init__( self )
+
+    def run( self ):
+        params = urllib.urlencode({
+                    "level": self.graduate and "grad" or "under",
+                    "sess": self.session,
+                    "subject": self.course.subject,
+                    "cournum": self.course.code
+                    })
+        f = urllib.urlopen(self.postURL, params)
+        try:
+            html = f.read()
+        finally:
+            f.close()
+        
+        self.html = html
+
+class WaterlooDispatcher(object):
     postURL = "http://www.adm.uwaterloo.ca/cgi-bin/cgiwrap/infocour/salook.pl"
+
     def __init__( self, requestDict):
         self.session = 0
         self.desiredCourses = []
@@ -91,78 +115,63 @@ class WaterlooDispatcher( Dispatcher.Dispatcher ):
 
         self.session = requestDict["term"]
 
-    def getHTML( self, course, graduate=False ):
-        params = urllib.urlencode({
-                    "level": graduate and "grad" or "under",
-                    "sess": self.session,
-                    "subject": course.subject,
-                    "cournum": course.code
-                    })
-        f = urllib.urlopen( self.postURL, params )
-        try:
-            html = f.read()
-        finally:
-            f.close()
+    def dispatch(self):
+        # Two types of queries - "CS 241" (to qualify) and "CS 2*" (to search)
+        toQualify = [] 
+        toSearch = []
+        allCourses = []
 
-        return html
+        for desiredCourse, courseObjects in self.getCourseObjects(self.desiredCourses):
+            if desiredCourse.doSearch:
+                groups = []
+                for k,g in itertools.groupby(courseObjects, lambda x:x.courseName): #Pairing AMATH 250 LEC with TUT
+                    groups.append(list(g))
+                toSearch.append(groups)
+            else:
+                toQualify.extend( courseObjects )
+
+            allCourses.extend(courseObjects)
+
+        self.checkBlowup(toQualify, toSearch)
+
+        #Compute "CS 241" type courses
+        self.qualifyCourses(toQualify[:])
+
+        #Compute "CS 2*" type courses
+        if len(toSearch) > 0:
+            validCatalogs = self.qualifiedSectionList[:]
+            self.qualifiedSectionList = []
+            self.addSearchCourses(validCatalogs, toSearch)
+
+        self.validCatalogList = [WaterlooCatalog.WaterlooCatalog(x) for x in self.qualifiedSectionList]
+        self.writeStatistics()
+
+        return self.makeJson(allCourses)
 
 
-    def writeStatistics( self ):
-        if not enableStatistics:
-            return
+    #Core algorithm for computing conflicts
+    def qualifyCourses( self, remainingCourses, sectionAcc=[] ):
+        if len( remainingCourses ) == 0:
+            if len( sectionAcc ) > 0 and self.checkCatalog( sectionAcc):
+                self.qualifiedSectionList.append(sectionAcc)
+        else:
+            currentCourse = remainingCourses.pop()
+            for currSection in currentCourse.sections:
+                for otherSection in sectionAcc:
+                    if currSection.conflictsWith( otherSection ):
+                        self.conflictingSections.add( (currSection, otherSection ) )
+                        break
+                else:
+                    self.qualifyCourses( remainingCourses[:], sectionAcc[:] + [currSection] )
 
-        cursor = statisticsCon.cursor()
-        cursor.execute( "INSERT INTO qualify_requests (id, time,ip,term) VALUES\
-        (NULL, datetime('now'), ?,?)", (os.environ["REMOTE_ADDR"],self.session) )
-  
-        request_id = cursor.lastrowid
-        #TODO: use executemany
-        for course in self.desiredCourses:
-            cursor.execute( "INSERT INTO qualify_request_courses (id, request_id, subject, code ) VALUES \
-            (NULL, %d, ?, ?)" % request_id, (course.subject, course.code ) )
-
-        for sections in self.conflictingSections:
-            namesToInsert = sorted( e.courseName for e in sections )
-            cursor.execute( "INSERT INTO qualify_request_conflicts (id, request_id, course1, course2 ) VALUES \
-            (NULL, ?, ?, ?)", ( request_id, namesToInsert[0], namesToInsert[1] ) )
-             
-        
-        statisticsCon.commit()
-
-        cursor.close()
      
-    class HTMLFetchThread( threading.Thread ):
-        def __init__( self, postURL, session, course, graduate=False):
-            self.postURL = postURL
-            self.session = session
-            self.course = course
-            self.graduate = graduate
-            self.html = ""
-            threading.Thread.__init__( self )
-
-        def run( self ):
-            params = urllib.urlencode({
-                        "level": self.graduate and "grad" or "under",
-                        "sess": self.session,
-                        "subject": self.course.subject,
-                        "cournum": self.course.code
-                        })
-            f = urllib.urlopen( self.postURL, params )
-            try:
-                html = f.read()
-            finally:
-                f.close()
-            
-            self.html = html
-
-
     def threadedHTMLFetch(self, desiredCourses, graduate=False):
         totalTimeout = 20.0
         htmlThreads = []
         htmlList = []
 
         for desiredCourse in desiredCourses:
-            t = self.HTMLFetchThread(self.postURL, self.session, desiredCourse, graduate)
+            t = HTMLFetchThread(self.postURL, self.session, desiredCourse, graduate)
             t.start()
             htmlThreads.append(t)
 
@@ -207,39 +216,9 @@ class WaterlooDispatcher( Dispatcher.Dispatcher ):
         
         return courseObjects
 
-    def dispatch(self):
-        # Two types of queries - "CS 241" (to qualify) and "CS 2*" (to search)
-        toQualify = [] 
-        toSearch = []
-        allCourses = []
-
-        for desiredCourse, courseObjects in self.getCourseObjects(self.desiredCourses):
-            if desiredCourse.doSearch:
-                groups = []
-                for k,g in itertools.groupby(courseObjects, lambda x:x.courseName): #Pairing AMATH 250 LEC with TUT
-                    groups.append(list(g))
-                toSearch.append(groups)
-            else:
-                toQualify.extend( courseObjects )
-
-            allCourses.extend(courseObjects)
-
-        self.preCheck( toQualify, toSearch )
-        self.qualifyCourses( toQualify[:] )
-
-        #Add search courses if we have any -- EXPENSIVE!
-        if len(toSearch) > 0:
-            validCatalogs = self.qualifiedSectionList[:]
-            self.qualifiedSectionList = []
-            self.addSearchCourses(validCatalogs, toSearch)
-
-        self.validCatalogList = [WaterlooCatalog.WaterlooCatalog(x) for x in self.qualifiedSectionList]
-        self.writeStatistics()
-
-        return self.makeJson(allCourses)
 
 
-    def preCheck( self, catalog, searchList ):
+    def checkBlowup(self, catalog, searchList):
         #Abort if we will never finish qualifying (blow-up)
         numClasses = 1
         if len( catalog ) > 1:
@@ -280,55 +259,40 @@ class WaterlooDispatcher( Dispatcher.Dispatcher ):
                 for catalog in validCatalogs:
                     self.qualifyCourses(possibleCourses[:], catalog[:])
 
-    def qualifyCourses( self, remainingCourses, sectionAcc=[] ):
-        if len( remainingCourses ) == 0:
-            if len( sectionAcc ) > 0 and self.checkCatalog( sectionAcc):
-                self.qualifiedSectionList.append(sectionAcc)
-        else:
-            currentCourse = remainingCourses.pop()
-            for currSection in currentCourse.sections:
-                for otherSection in sectionAcc:
-                    if currSection.conflictsWith( otherSection ):
-                        self.conflictingSections.add( (currSection, otherSection ) )
-                        break
-                else:
-                    self.qualifyCourses( remainingCourses[:], sectionAcc[:] + [currSection] )
+    def writeStatistics( self ):
+        if not enableStatistics:
+            return
+
+        cursor = statisticsCon.cursor()
+        cursor.execute( "INSERT INTO qualify_requests (id, time,ip,term) VALUES\
+        (NULL, datetime('now'), ?,?)", (os.environ["REMOTE_ADDR"],self.session) )
+  
+        request_id = cursor.lastrowid
+        #TODO: use executemany
+        for course in self.desiredCourses:
+            cursor.execute( "INSERT INTO qualify_request_courses (id, request_id, subject, code ) VALUES \
+            (NULL, %d, ?, ?)" % request_id, (course.subject, course.code ) )
+
+        for sections in self.conflictingSections:
+            namesToInsert = sorted( e.courseName for e in sections )
+            cursor.execute( "INSERT INTO qualify_request_conflicts (id, request_id, course1, course2 ) VALUES \
+            (NULL, ?, ?, ?)", ( request_id, namesToInsert[0], namesToInsert[1] ) )
+             
+        
+        statisticsCon.commit()
+        cursor.close()
+
 
     def makeErrorJson( self, errorString ):
-        return { "error": errorString }
+        return {"error": errorString}
 
     def makeJson( self, startCourses ):
-        return {  "courses": dict( (e.uniqueName, e.getJson()) for e in startCourses),
-                  "catalogs": [e.getJson() for e in self.validCatalogList],
-                  "conflicts": {
+        return { "courses": dict( (e.uniqueName, e.getJson()) for e in startCourses),
+                 "catalogs": [e.getJson() for e in self.validCatalogList],
+                 "conflicts": {
                                 "courses":  [ (o.getReferenceJson(), t.getReferenceJson() ) for o,t in self.conflictingSections ],
                                 "messages": self.conflictingMessages 
                                 },
-                  "valid_metrics" : WaterlooCatalog.WaterlooCatalog.validMetrics,
-                  "section_information": WaterlooCourseSection.WaterlooCourseSection.sectionInformation
+                 "valid_metrics" : WaterlooCatalog.WaterlooCatalog.validMetrics,
+                 "section_information": WaterlooCourseSection.WaterlooCourseSection.sectionInformation
                 }
-
-
-def test():
-    dispatcher = WaterlooDispatcher( "1079")
-#    desiredCourse = DesiredCourse( "ECON", "101" )
-
-    
-
-    # print dispatcher.getHTML( 1085, desiredCourse )
-    f = open( "test.html", "r" )
-    html = f.read()
-    f.close()
-
-    courses = WaterlooCourse.constructCourses( html  )
-    f = open( "math135.htm", "r" ) 
-    html = f.read()
-    f.close()
-    courses.extend( WaterlooCourse.constructCourses( html ) )
-    
-
-    dispatcher.qualifyCourses( courses )
-    print simplejson.dumps( dispatcher.makeJson(courses) )
-
-if __name__ == "__main__":
-    test()
