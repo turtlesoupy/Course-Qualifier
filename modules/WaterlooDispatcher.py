@@ -4,7 +4,6 @@ import sys
 import urllib
 import logging
 import simplejson
-import Dispatcher
 import WaterlooCourse
 import WaterlooCourseSection
 import WaterlooCatalog
