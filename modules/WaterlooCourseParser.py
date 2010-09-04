@@ -9,6 +9,8 @@ from BeautifulSoup import NavigableString
 from WaterlooCourse import WaterlooCourse
 from WaterlooCourseSection import WaterlooCourseSection
 
+# Parses the "salook" waterloo html page
+# This is hacky, but it has to be (screen scraping)
 class WaterlooCourseParser(object):
     def __init__(self, courseOptions, globalOptions):
         self.courseOptions = courseOptions
@@ -49,16 +51,50 @@ class WaterlooCourseParser(object):
             raise QualifierExceptions.MissingRequiredSectionsException( "Missing section(s) %s for %s" % 
                 ( ",".join( requiredSections), courses[0].courseName ) )
 
+    def meetsTimeOptions(self, courseSection):
+        #Check for minimum start and end at parsing level
+        try:
+            if self.globalOptions[ "start_later_than_hour" ] != "" and self.globalOptions["start_later_than_minute"] != "":
+               minTime = 60*60*int(self.globalOptions["start_later_than_hour"]) + 60*int(self.globalOptions["start_later_than_minute"] )
+               if self.globalOptions[ "start_later_than_hour" ] == "12":
+                   minTime -= 12*60*60
 
-    # This function takes html from waterloo and converts it into a course object
-    # it is a bit of a mess, but I generally let parsing functions be messy
+               if self.globalOptions['start_later_than_ampm'] == "PM":
+                   minTime += 60*60*12
+
+               if not courseSection.startsAfter( minTime ):
+                   return False
+        except (KeyError, ValueError ), e:
+            pass
+
+        try:
+            if self.globalOptions[ "ends_earlier_than_hour" ] != "" and self.globalOptions["ends_earlier_than_minute"] != "":
+               minTime = 60*60*int(self.globalOptions["ends_earlier_than_hour"]) + 60*int(self.globalOptions["ends_earlier_than_minute"] )
+               if self.globalOptions[ "ends_earlier_than_hour" ] == "12":
+                   minTime -= 12*60*60
+
+               if self.globalOptions['ends_earlier_than_ampm'] == "PM":
+                   minTime += 60*60*12
+
+               if not courseSection.endsEarlier( minTime ):
+                   return False
+        except (KeyError, ValueError ), e:
+            pass
+
+        return True
+
     def parseHTML(self, inputHTML):
-        courses = []
         soup = BeautifulSoup( inputHTML, convertEntities=BeautifulSoup.HTML_ENTITIES )
         try:
             mainTable = soup.findAll( name="table", limit=1 )[0]
         except IndexError:
             raise QualifierExceptions.CourseMissingException()
+        return self.coursesFromTable(mainTable)
+
+
+    # This function takes html from waterloo and converts it into a course object
+    # it is a bit of a mess, but I generally let parsing functions be messy
+    def coursesFromTable(self, mainTable):
         courses = []
         for subject in mainTable.findAll( text="Subject" ):
             headerRow = subject.findParents( "tr" )[0]
@@ -72,7 +108,7 @@ class WaterlooCourseParser(object):
             waterlooCourse.courseName = "%s %s" % (details[0], details[1] )
             if len( details ) == 4:
                 try:
-                    waterlooCourse.creditWorth = float( details[2] )
+                    waterlooCourse.creditWorth = float(details[2])
                 except ValueError:
                     pass
                 waterlooCourse.description = details[3]
@@ -81,10 +117,10 @@ class WaterlooCourseParser(object):
             classHeaderRow = classTable.findNext( "th" ).parent
             classHeaders = [e.strip().lower() for e in classHeaderRow.findAll( text=re.compile(".*" ) ) if not e.isspace() ]
 
-            classIndex = classHeaders.index( "class" )
-            dateIndex = classHeaders.index( "time days/date" )
+            classIndex   = classHeaders.index( "class" )
+            dateIndex    = classHeaders.index( "time days/date" )
             compSecIndex = classHeaders.index( "comp sec" )
-            campusIndex = classHeaders.index( "camp loc" )
+            campusIndex  = classHeaders.index( "camp loc" )
             enrlCapIndex = classHeaders.index( "enrl cap" )
             enrlTotIndex = classHeaders.index( "enrl tot" )
 
@@ -92,6 +128,7 @@ class WaterlooCourseParser(object):
             instructorIndex = None
             rel1Index = None
             rel2Index = None
+
             try:
                 roomIndex = classHeaders.index("bldg room" )
                 instructorIndex = classHeaders.index( "instructor" )
@@ -133,11 +170,14 @@ class WaterlooCourseParser(object):
                             lastSection.room = "%s / %s" % (lastSection.room, texts[roomIndex])
 
                 elif len(texts) - blanks == 0:
+                    #Heuristic - bad row if we are all blank
                     continue
                 elif len( classHeaders ) - len( tds ) > 3:
+                    #Heuristic - there are more than 3 blank columns
                     continue
                 else:
                     lastValid = False
+
                     #ignore distance ed if we want
                     if not self.globalOptions["show_distance_ed"]:
                         if "DE" in texts[campusIndex] or "Online" in texts[roomIndex]:
@@ -146,7 +186,6 @@ class WaterlooCourseParser(object):
                     courseSection = WaterlooCourseSection( waterlooCourse )
                     courseSection.uniqueName = texts[classIndex]
                     courseSection.campus = texts[campusIndex]
-
 
                     courseType, sectionNum = texts[compSecIndex].split()
 
@@ -164,6 +203,7 @@ class WaterlooCourseParser(object):
                     except ValueError:
                         pass
 
+                    # Next row may represent the same course with more helpful information
                     if not waterlooCourse.type:
                         waterlooCourse.type = courseType
                     elif waterlooCourse.type != courseType:
@@ -173,7 +213,6 @@ class WaterlooCourseParser(object):
                         waterlooCourse.sections = []
                         waterlooCourse.type = courseType
 
-                    #Skip tutorials if we don't want them
                     courseSection.sectionNum = sectionNum
                     courseSection.courseName = waterlooCourse.uniqueName
                     courseSection.alternateName = texts[compSecIndex]
@@ -198,7 +237,6 @@ class WaterlooCourseParser(object):
                         try:
                             courseSection.instructor = texts[instructorIndex]
                             courseSection.setRateMyProfessorsInfo()
-
                         except IndexError:
                             pass
                     if rel1Index and not texts[rel1Index].isspace():
@@ -219,36 +257,9 @@ class WaterlooCourseParser(object):
                     except (KeyError, ValueError), e:
                         pass
 
-                    #Check for minimum start and end
-                    try:
-                        if self.globalOptions[ "start_later_than_hour" ] != "" and self.globalOptions["start_later_than_minute"] != "":
-                           minTime = 60*60*int(self.globalOptions["start_later_than_hour"]) + 60*int(self.globalOptions["start_later_than_minute"] )
-                           if self.globalOptions[ "start_later_than_hour" ] == "12":
-                               minTime -= 12*60*60
-
-                           if self.globalOptions['start_later_than_ampm'] == "PM":
-                               minTime += 60*60*12
-
-                           if not courseSection.startsAfter( minTime ):
-                               continue
-                    except (KeyError, ValueError ), e:
-                        pass
-
-                    try:
-                        if self.globalOptions[ "ends_earlier_than_hour" ] != "" and self.globalOptions["ends_earlier_than_minute"] != "":
-                           minTime = 60*60*int(self.globalOptions["ends_earlier_than_hour"]) + 60*int(self.globalOptions["ends_earlier_than_minute"] )
-                           if self.globalOptions[ "ends_earlier_than_hour" ] == "12":
-                               minTime -= 12*60*60
-
-                           if self.globalOptions['ends_earlier_than_ampm'] == "PM":
-                               minTime += 60*60*12
-
-                           if not courseSection.endsEarlier( minTime ):
-                               continue
-                    except (KeyError, ValueError ), e:
-                        logging.info( e )
-                        pass
-
+                    if not self.meetsTimeOptions(courseSection):
+                        continue
+                    
                     lastValid = True
                     waterlooCourse.addSection( courseSection ) 
 
@@ -259,6 +270,5 @@ class WaterlooCourseParser(object):
             raise QualifierExceptions.CourseMissingException()
 
         self.checkAllCoursesAgainstOptions(courses)
-
 
         return courses
