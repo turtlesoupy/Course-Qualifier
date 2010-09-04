@@ -1,16 +1,16 @@
 import os
 import re
 import sys
+import time
 import urllib
 import logging
-import simplejson
-import WaterlooCourse
-import WaterlooCourseSection
-import WaterlooCatalog
-import QualifierExceptions
 import threading
 import itertools
-import time
+import simplejson
+import WaterlooCatalog
+import WaterlooCourseSection
+import QualifierExceptions
+from WaterlooCourseParser import WaterlooCourseParser
 from BeautifulSoup import BeautifulSoup
 from BeautifulSoup import NavigableString
 
@@ -197,25 +197,23 @@ class WaterlooDispatcher(object):
         # First try to grab all the undergraduate level
         undergradList = self.threadedHTMLFetch(desiredCourses, False)
         for desiredCourse, html in zip(desiredCourses, undergradList):
+            parser = WaterlooCourseParser(desiredCourse.options, self.options)
             try:
-                courseObjects.append((desiredCourse, WaterlooCourse.constructCourses(html, desiredCourse.options, self.options)))
+                courseObjects.append((desiredCourse, parser.parseHTML(html)))
             except QualifierExceptions.CourseMissingException:
                 possibleGradCourses.append(desiredCourse)
 
         # Any that are missing will need a separate call to graduate courses
         if len(possibleGradCourses) > 0:
-            logging.info(possibleGradCourses[0])
             gradList = self.threadedHTMLFetch(possibleGradCourses, True)
             for desiredCourse, html in zip(possibleGradCourses, gradList):
+                parser = WaterlooCourseParser(desiredCourse.options, self.options)
                 try:
-                    courseObjects.append((desiredCourse, WaterlooCourse.constructCourses(html, desiredCourse.options, self.options)))
+                    courseObjects.append((desiredCourse, parser.parseHTML(html)))
                 except QualifierExceptions.CourseMissingException:
                     logging.warning("Unable to find any courses to match %s %s" % (desiredCourse.subject, desiredCourse.code ))
 
-        
         return courseObjects
-
-
 
     def checkBlowup(self, catalog, searchList):
         #Abort if we will never finish qualifying (blow-up)
