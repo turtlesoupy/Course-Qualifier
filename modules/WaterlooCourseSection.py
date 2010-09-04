@@ -39,19 +39,18 @@ class WaterlooCourseSection:
         self.enrlCap = -1
         self.enrlTot = -1
         self.hasValidDate = False
-        self.validTimes = [[] for i in xrange(7)]
+        self.offerings  = []
         self.rateMyProfessorsQuality = None
         self.rateMyProfessorsEase = None
         self.rateMyProfessorsURL  = None
         self.dateString = ""
-
 
     def __hash__( self ):
         return hash(self.uniqueName + self.courseName)
 
     def dump( self ):
         return """WaterlooCourseSection: %(name)s Instructor:'%(instructor)s' Room:'%(room)s' valid:'%(times)s""" % \
-                {"name": self.uniqueName, "instructor": self.instructor, "room": self.room, "times": self.validTimes}
+                {"name": self.uniqueName, "instructor": self.instructor, "room": self.room}
 
     def getJson( self ):
         return {  "unique_name": self.uniqueName,
@@ -59,7 +58,7 @@ class WaterlooCourseSection:
                 "instructor": self.instructor,
                 "room": self.room,
                 "campus": self.campus,
-                "valid_times": self.validTimes,
+                "offerings":   [e.getJson() for e in self.offerings],
                 "related1" : self.related1,
                 "related2" : self.related2,
                 "rmp_quality" : self.rateMyProfessorsQuality,
@@ -67,6 +66,13 @@ class WaterlooCourseSection:
                 "rmp_url"  : self.rateMyProfessorsURL,
                 "date_string" : self.dateString
             } 
+
+    def addOfferings(self, newOfferings):
+        self.offerings += newOfferings
+        self.hasValidDate = len(self.offerings) > 0
+
+    def addDateString(self, dateStr):
+        self.dateString = ("%s %s" % (self.dateString, dateStr)).strip()
 
     def getReferenceJson( self ):
         return {
@@ -108,66 +114,23 @@ class WaterlooCourseSection:
                 break
 
     def conflictsWith( self, otherSection ):
-        for myDayTime, otherDayTime in zip( self.validTimes, otherSection.validTimes):
-            for (myStartTime, myEndTime) in myDayTime:
-                for (otherStartTime, otherEndTime) in otherDayTime:
-        #            if myStartTime >= otherStartTime and myStartTime <= otherEndTime:
-         #               return True
-          #          if myEndTime >= otherStartTime and myEndTime <= otherEndTime:
-#                        return True
-		     if (myStartTime <= otherEndTime and myEndTime >= otherEndTime):
-			 return True
+        for o1 in self.offerings:
+            for o2 in otherSection.offerings:
+                if o1.conflictsWith(o2):
+                    return True
 
         return False
 
     def startsAfter( self, time ):
-        for dayTime in self.validTimes:
-            for startTime, endTime in dayTime:
-                if startTime != False and startTime < time:
-                    return False
+        for o in self.offerings:
+            if o.startTime < time:
+                return False
+
         return True
 
     def endsEarlier( self, time ):
-        for dayTime in self.validTimes:
-            for startTime, endTime in dayTime:
-                if endTime != False and endTime > time:
-                    return False
+        for o in self.offerings:
+            if o.endTime > time:
+                return False
+
         return True
-
-
-    def parseDateFromStr( self, dateStr ):
-        # This may be the second time we are adding
-        self.dateString = ("%s %s" % (self.dateString, dateStr)).strip()
-        if dateStr.upper() == "TBA":
-            return
-
-        match = self.c_date_re.match( dateStr )
-        if not match:
-            return
-
-        startHour, startMinute, endHour, endMinute = map(int,match.groups()[:-1])
-        days = match.groups()[-1]
-        if startHour < 8 or (startHour == 8 and startMinute < 20):
-            startHour += 12
-            endHour += 12
-        elif endHour < 9:
-            endHour += 12
-
-
-        startTimeSeconds = 60*60*startHour + 60*startMinute
-        endTimeSeconds = 60*60*endHour + 60*endMinute
-
-        curDay = days[0]
-        validDays = []
-        for char in days[1:]:
-            if curDay and char.isupper():
-                validDays.append( curDay )
-                curDay = char
-            else:
-                curDay += char 
-
-        validDays.append( curDay )
-
-        for day in validDays:
-            self.hasValidDate = True
-            self.validTimes[ self.c_date_map[day] ].append( ( startTimeSeconds, endTimeSeconds ))

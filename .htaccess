@@ -2,11 +2,7 @@ Options +ExecCGI -Indexes
 AddHandler cgi-script .py
 
 RewriteEngine on
-RewriteCond %{HTTP_HOST} macedon
-RewriteRule ^your_schedule\.pdf$ /~tdimson/qualifier/makePDFCalendarCGI.py
+RewriteCond %{HTTP_HOST} ^192.168.*
+RewriteRule ^your_schedule\.pdf$ /~tdimson/coursequalifier.com/makePDFCalendarCGI.py [L,NC]
 
-RewriteCond %{HTTP_HOST} qualifier.thomasdimson.com
-RewriteRule ^your_schedule\.pdf$ makePDFCalendarCGI.py
-
-RewriteCond %{HTTP_HOST} coursequalifier.com
 RewriteRule ^your_schedule\.pdf$ makePDFCalendarCGI.py

@@ -8,6 +8,7 @@ from BeautifulSoup import BeautifulSoup
 from BeautifulSoup import NavigableString
 from WaterlooCourse import WaterlooCourse
 from WaterlooCourseSection import WaterlooCourseSection
+from WaterlooCourseOffering import WaterlooCourseOffering
 
 # Parses the "salook" waterloo html page
 # This is hacky, but it has to be (screen scraping)
@@ -165,7 +166,8 @@ class WaterlooCourseParser(object):
                     if lastValid:
                         lastSection = waterlooCourse.sections[-1]
                         if texts[dateIndex]:
-                            lastSection.parseDateFromStr( texts[dateIndex] ) 
+                            lastSection.addOfferings(WaterlooCourseOffering.offeringsFromDateString(texts[dateIndex]))
+                            lastSection.addDateString(texts[dateIndex])
                         if texts[roomIndex] and texts[roomIndex] != lastSection.room:
                             lastSection.room = "%s / %s" % (lastSection.room, texts[roomIndex])
 
@@ -216,7 +218,9 @@ class WaterlooCourseParser(object):
                     courseSection.sectionNum = sectionNum
                     courseSection.courseName = waterlooCourse.uniqueName
                     courseSection.alternateName = texts[compSecIndex]
-                    courseSection.parseDateFromStr( texts[dateIndex] )
+                    courseSection.addOfferings(WaterlooCourseOffering.offeringsFromDateString(texts[dateIndex]))
+                    courseSection.addDateString(texts[dateIndex])
+
                     if enrlTotIndex:
                         try:
                             courseSection.enrlTot = texts[enrlTotIndex]

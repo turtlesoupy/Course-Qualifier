@@ -56,12 +56,13 @@ def createTable(requestDict):
     #First pass, determine boundaries
     for course, section in sections.iteritems():
         sectionInfo = responseData["courses"][course]["sections"][section]
-        for dayTime in sectionInfo["valid_times"]:
-            for start,end in dayTime:
-                if start and (not earliestStart or start < earliestStart):
-                    earliestStart = start
-                if end and (not latestEnd or end > latestEnd):
-                    latestEnd = end 
+        for offering in sectionInfo["offerings"]:
+            startTime = offering["start_time"]
+            endTime   = offering["end_time"]
+            if startTime and (not earliestStart or startTime < earliestStart):
+                earliestStart = startTime
+            if endTime and (not latestEnd or endTime > latestEnd):
+                latestEnd = endTime
 
     if earliestStart == None or latestEnd == None:
         realStart = 0
@@ -86,14 +87,16 @@ def createTable(requestDict):
     for course, section in sections.iteritems():
         sectionInfo = responseData["courses"][course]["sections"][section]
         color = getClassColor()
-        for i, dayTime in enumerate(sectionInfo["valid_times"]):
-            for (start,end) in dayTime:
-                row = (start - realStart) / stepSize
-                rowEnd = (end - realStart) / stepSize
-                col = i + 1
-                data[row][col] = Paragraph("<para leading='9' align='center' fontsize='7.5'>%s<br/>%s</para>" % (course, sectionInfo["room"] ), styles["BodyText"] )
-                style.append( ("BACKGROUND", (col, row+1), (col, rowEnd +1), color ) )
-                style.append( ("SPAN", (col,row+1), (col,rowEnd+1)) )
+        for offering in sectionInfo["offerings"]:
+            start = offering["start_time"]
+            end   = offering["end_time"]
+
+            row = (start - realStart) / stepSize
+            rowEnd = (end - realStart) / stepSize
+            col = offering["day"] + 1
+            data[row][col] = Paragraph("<para leading='9' align='center' fontsize='7.5'>%s<br/>%s</para>" % (course, sectionInfo["room"] ), styles["BodyText"] )
+            style.append( ("BACKGROUND", (col, row+1), (col, rowEnd +1), color ) )
+            style.append( ("SPAN", (col,row+1), (col,rowEnd+1)) )
 
     
     style.append( ("BACKGROUND", (0, 0), (-1, 0), colors.black ) )

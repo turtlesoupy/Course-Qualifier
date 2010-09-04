@@ -1,6 +1,8 @@
 import os
 import sys
 import logging
+import itertools
+from operator import attrgetter
 from KeyedObject import KeyedObject
 
 
@@ -21,79 +23,46 @@ class WaterlooCatalog( object ):
         self.computeMetrics()
 
     def computeMetrics( self ):
-        
-        #Valid days
-        validDays = [False]*7
-        for section in self.sections:
-            for i, dayTime in enumerate( section.validTimes ):
-                for times in dayTime:
-                    if times[0] and times[1]:
-                        validDays[i] = True
+        self.metrics["days_full"] = self.computeValidDays()
+        self.metrics["idle_time"] = self.computeIdleTime()
+        self.metrics["earliest_start"] = self.computeEarliestStartTime()
+        self.metrics["latest_end"] = self.computeLatestEndTime()
+        self.metrics["lateness"] = self.computeLateness()
+        self.metrics["rmp_quality"] = self.computeRateMyProfessorsQuality()
 
-        numValidDays = len( [e for e in validDays if e]  )
-        self.metrics["days_full"] = numValidDays
-        
-        #Time between classes
-        timesPerDay = [None]*7
-        for section in self.sections:
-            for i, dayTimes in enumerate( section.validTimes ):
-                for times in dayTimes:
-                    if times[0] and times[1]:
-                        if not timesPerDay[i]:
-                            timesPerDay[i] = []
-                        timesPerDay[i].append( times )
-
+    #Time in between classes
+    def computeIdleTime(self):
         idleTime = 0
-        for day in (e for e in timesPerDay if e):
-            day.sort( lambda x, y: x[0] - y[0] )
-            for i in range( len( day ) - 1):
-                idleTime += day[i+1][0] - day[i][1]
-
-        self.metrics["idle_time"] = idleTime 
-
-        #Earliest start time / Latest end time
-        earliestStart = None
-        latestEnd = None
-
-        for section in self.sections:
-            for dayTimes in section.validTimes:
-                for start, end in dayTimes:
-                    if not earliestStart and not latestEnd:
-                        earliestStart = start
-                        latestEnd = end
-                    else:
-                        if start and start < earliestStart:
-                            earliestStart = start
-                        if end and end > latestEnd:
-                            latestEnd = end
-
-        self.metrics["earliest_start"] = earliestStart
-        self.metrics["latest_end"] = latestEnd
-
-
-        #Rate my professors quality
-        rmp_sections = 0
-        rmp_quality = 0.0
-        for section in self.sections:
-            if section.rateMyProfessorsQuality != None:
-                rmp_sections += 1
-                rmp_quality += section.rateMyProfessorsQuality
-
-        if rmp_sections > 0:
-            self.metrics["rmp_quality"] = rmp_quality / rmp_sections
+        allOfferings  = sorted((itertools.chain(*[e.offerings for e in self.sections])), key=attrgetter('day'))
+        for d, g in itertools.groupby(allOfferings, attrgetter('day')):
+            sortedDay = sorted(g, lambda x,y : x.startTime - y.startTime)
+            for i in xrange(len(sortedDay) - 1):
+                idleTime += sortedDay[i+1].startTime - sortedDay[i].endTime
+        return idleTime
+    
+    def computeRateMyProfessorsQuality(self):
+        rmpRatings = [e.rateMyProfessorsQuality for e in self.sections if e.rateMyProfessorsQuality != None]
+        if len(rmpRatings) == 0:
+            return None
         else:
-            self.metrics["rmp_quality"] = None
+            return float(sum(rmpRatings)) / len(rmpRatings)
 
-        self.setLateness()
+    def computeValidDays(self):
+        return len(set(o.day for o in itertools.chain(*[e.offerings for e in self.sections])))
 
-    def setLateness(self):
-        maximumTime = 24*60*60 * sum( sum([ len(dayTime) for dayTime in e.validTimes]) for e in self.sections )
-        realTime =  sum( sum( sum(x[1] for x in dayTime) for dayTime in e.validTimes) for e in self.sections )
-	if maximumTime == 0:
-		self.metrics["lateness"] = 0
-	else:
-		self.metrics["lateness"] = float(realTime) / maximumTime
-         
+    def computeEarliestStartTime(self):
+        return min(o.startTime for o in itertools.chain(*[e.offerings for e in self.sections]))
+
+    def computeLatestEndTime(self):
+        return max(o.endTime for o in itertools.chain(*[e.offerings for e in self.sections]))
+
+    def computeLateness(self):
+        maxTime = 24*60*60 * sum(len(e.offerings) for e in self.sections)
+        if maxTime <= 0:
+            return 0
+
+        myTime = sum(o.endTime for o in itertools.chain(*[e.offerings for e in self.sections]))
+        return float(myTime) / maxTime
 
     def getJson( self, reference=True ):
         if reference:

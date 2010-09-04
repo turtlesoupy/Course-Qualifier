@@ -13,7 +13,6 @@ var qualifyRequest;
 **/
 
 var Base64 = {
-
     // private property
     _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
 
@@ -26,7 +25,6 @@ var Base64 = {
         input = Base64._utf8_encode(input);
 
         while (i < input.length) {
-
             chr1 = input.charCodeAt(i++);
             chr2 = input.charCodeAt(i++);
             chr3 = input.charCodeAt(i++);
@@ -446,7 +444,7 @@ function qualifyCallback( response )
         {
             var showConflictsText = document.getElementById( "show_conflicts" );
             var showConflictsNumber = document.getElementById( "show_conflicts_number" ); 
-            showConflictsText.innerHTML = "Show conflicts";
+            showConflictsText.innerHTML = "Show conflicting courses";
             showConflictsNumber.innerHTML = "(" + data.result.conflicts.courses.length  + ")";
         }
         
@@ -791,15 +789,13 @@ function createCalendar( courseData, sections )
     for( var section in sections )
     {
         var sectionInfo = courseData[section].sections[sections[section]];
-        var validTimes = sectionInfo.valid_times;
-        for( var j =0; j< validTimes.length; j++ )
-        {
-            for( var k = 0; k < validTimes[j].length; k++ ) {
-                minStartTime = Math.min( minStartTime, validTimes[j][k][0] );
-                maxEndTime = Math.max( maxEndTime, validTimes[j][k][1] );
-            }
+        var offerings  = sectionInfo.offerings;
+        for(var j = 0; j < offerings.length; j++) {
+            minStartTime = Math.min(minStartTime, offerings[j].start_time);
+            maxEndTime   = Math.max(maxEndTime, offerings[j].end_time);
         }
     }
+
 
     var table = document.createElement( "table" );
     var tableBody = document.createElement( "tbody" );
@@ -852,39 +848,36 @@ function createCalendar( courseData, sections )
     //Second time to fit into the proper bucket
     var startBucket = parseInt( realStartTime / stepSize );
     var endBucket = parseInt( realEndTime / stepSize );
-    i = 0; 
+    var i = 0;
     for( var course in sections )
     {
         var courseInfo = courseData[course];
         var sectionInfo = courseInfo.sections[sections[course]];
-        var validTimes = sectionInfo.valid_times;
-        for( j =0; j< validTimes.length; j++ )
-        {
-            for( k = 0; k < validTimes[j].length; k++ ) {
-                var startTime = validTimes[j][k][0];
-                var endTime = validTimes[j][k][1];
-                if( startTime )
-                {
-                    for( var l = startTime; l <= endTime; l += stepSize )
-                    {
-                        var bucket = parseInt(l / stepSize) - startBucket;
-                        var cols = tableRows[bucket].childNodes;
-                        if( l == startTime )
-                        {
-                            cols[j + 1].appendChild( document.createTextNode( courseInfo.courseName + " " ) );
-                        }
-                        else if ( k == startTime + stepSize )
-                        {
-                            cols[j + 1].appendChild( document.createTextNode( sectionInfo.room + " " ) );
-                        }
-                        else
-                        {
-                            cols[j + 1].appendChild( document.createTextNode(  " " ) );
-                        }
+        var offerings = sectionInfo.offerings;
+        for(j = 0; j < offerings.length; j++) {
+            var offering  = offerings[j];
+            var startTime = offering.start_time;
+            var endTime   = offering.end_time;
 
-                        cols[j + 1].className = "classNum" + i;
+            if(startTime && endTime) {
+                for( var k = startTime; k <= endTime; k += stepSize )
+                {
+                    var bucket = parseInt(k / stepSize) - startBucket;
+                    var cols = tableRows[bucket].childNodes;
+                    if( k == startTime )
+                    {
+                        cols[offering.day + 1].appendChild( document.createTextNode( courseInfo.courseName + " " ) );
+                    }
+                    else if ( k == startTime + stepSize )
+                    {
+                        cols[offering.day + 1].appendChild( document.createTextNode( sectionInfo.room + " " ) );
+                    }
+                    else
+                    {
+                        cols[offering.day + 1].appendChild( document.createTextNode(  " " ) );
                     }
 
+                    cols[offering.day + 1].className = "classNum" + i;
                 }
             }
         }
@@ -908,7 +901,7 @@ function hideConflicts()
     if( toggleConflicts.showing )
     {
         conflictDiv.innerHTML = ""; 
-        showConflictsText.innerHTML = "Show conflicts";
+        showConflictsText.innerHTML = "Show conflicting courses";
         toggleConflicts.showing = false; 
     }
 }
@@ -956,7 +949,7 @@ function toggleConflicts( e )
             conflictDiv.appendChild( document.createElement( "br" ) );
         }
 
-        showConflictsText.innerHTML = "Hide conflicts";
+        showConflictsText.innerHTML = "Hide conflicting courses";
         toggleConflicts.showing = true; 
     }
 }
