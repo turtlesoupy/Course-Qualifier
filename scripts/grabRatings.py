@@ -33,26 +33,24 @@ class Professor( object ):
 def getDescendantText( tag ):
     return " ".join([e.strip() for e in tag.findAll( text = lambda(text ) : len(text) > 0 ) ])
 
-def getProfessors( soup ):
-    rmp_table = soup.find( id="rmp_table" )
-    headers = rmp_table.find( attrs={"class": "table_headers"} ).findAll( 'th' ) 
-
-    headerNames = []
-    for header in headers:
-        headerNames.append(" ".join([e.strip() for e in header.findAll( text = lambda( text ) : len(text ) > 0 )]))
-
-    headerMap = dict( [(e,i) for i,e in enumerate( headerNames)] )
-
+def getProfessors(soup):
+    rmp_table = soup.find(id="ratingTable")
     professors = []
     
-    for row in rmp_table.findAll( "tr" ):
-        cols = row.findAll("td" )
+    for row in (rmp_table.findAll("div", attrs={'class': 'entry odd'}) + 
+                rmp_table.findAll("div", attrs={'class': 'entry even'})):
+
         try:
-            fullName= getDescendantText(cols[headerMap["Professor's Name"]])
-            url = "%s%s" % (baseURL, cols[headerMap["Professor's Name"]].find('a')["href"])
-            quality = float(getDescendantText( cols[headerMap["Overall Quality"]] ))
-            numberRatings = int(getDescendantText( cols[headerMap["Total Ratings"] ] ))
-            ease = float(getDescendantText( cols[headerMap["Ease"] ] ))
+            nameNode = row.find(attrs={'class': 'profName'})
+            rateNode = row.find(attrs={'class': 'profAvg'})
+            easeNode = row.find(attrs={'class': 'profEasy'})
+            numNode  = row.find(attrs={'class': 'profRatings'})
+
+            fullName = getDescendantText(nameNode)
+            url = "%s%s" % (baseURL, nameNode.find('a')["href"])
+            quality = float(getDescendantText(rateNode))
+            numberRatings = int(getDescendantText(numNode))
+            ease = float(getDescendantText(easeNode))
             lastName, firstName = [e.strip() for e in fullName.split(",") ]
 
         except (IndexError, ValueError):
@@ -82,20 +80,20 @@ def getAllProfessors(startUrl):
         soup = BeautifulSoup( contents, convertEntities="html" )
         
         oldLen = len( professors )
-        professors.extend(getProfessors( soup ))
+        professors.extend(getProfessors(soup))
 
-        nav = soup.find( attrs={"class": "rmp_search_nav" } )
+        nav = soup.find( attrs={"class": "pagination" } )
         if nav:
-            newURL =  nav.find( text="Next").parent["href"]
-            if not newURL:
+            currentURL = nav.find(id="current")
+            nextLi = currentURL.parent.findNextSibling('li')
+            if not nextLi:
+                print "Ending loop at %s" % currentURL
                 break
 
-            try:
-                newURL.index("letter=Z")
-                url.index("letter=Z")
+            newURL = nextLi.find('a')["href"]
+            if not newURL:
+                print "Ending loop at %s" % currentURL
                 break
-            except ValueError:
-                pass
 
             url = "%s%s" % ( baseURL,  newURL )
         else:
@@ -104,11 +102,11 @@ def getAllProfessors(startUrl):
     return professors
 
         
-def createDB( fileName, database  ):
+def createDB(fileName, database):
     con = sqlite.connect( database )
     cursor = con.cursor()
+    f = open( fileName, 'r' )
     try:
-        f = open( fileName, 'r' )
         for name, url in [ e.split(",") for e in f if not e.isspace()] :
             print "Creating table", name
             cursor.execute('CREATE TABLE %s (id INTEGER PRIMARY KEY,\
@@ -125,8 +123,8 @@ def printDB( tableName, database ):
 
 def gatherData( fileName, database ):
     con = sqlite.connect( database )
+    f = open( fileName, 'r' )
     try:
-        f = open( fileName, 'r' )
         for name, url in [ e.split(",") for e in f if not e.isspace()] :
             professors = getAllProfessors( url )
             for professor in professors:
@@ -143,13 +141,13 @@ if __name__ == "__main__":
     parser.add_option( "-c", "--create", dest="create", action="store_true", default=False,
                         help="Create the databases as specified by file" )
     parser.add_option( "-f", "--file", dest="filename",
-                        help="file for all databases" )
+                        help="Config file for all databases" )
 
     parser.add_option( "-p", "--print", dest="print_db",
-                        help="print the contents of a specific table" )
+                        help="Print the contents of a specific table (for debugging)" )
 
     parser.add_option( "-d", "--database", dest="database",
-                        help="database to write to" )
+                        help="Database filename to write to" )
 
     (options, args) = parser.parse_args()
 
