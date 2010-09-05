@@ -10,6 +10,10 @@ from WaterlooCourse import WaterlooCourse
 from WaterlooCourseSection import WaterlooCourseSection
 from WaterlooCourseOffering import WaterlooCourseOffering
 
+whiteSpaceRE = re.compile("\s{2,}")
+def cleanString(theString):
+    return whiteSpaceRE.sub(" ", theString).strip()
+
 # Parses the "salook" waterloo html page
 # This is hacky, but it has to be (screen scraping)
 class WaterlooCourseParser(object):
@@ -51,6 +55,7 @@ class WaterlooCourseParser(object):
         if len( requiredSections ) > 0:
             raise QualifierExceptions.MissingRequiredSectionsException( "Missing section(s) %s for %s" % 
                 ( ",".join( requiredSections), courses[0].courseName ) )
+
 
     def meetsTimeOptions(self, courseSection):
         #Check for minimum start and end at parsing level
@@ -98,6 +103,8 @@ class WaterlooCourseParser(object):
     def coursesFromTable(self, mainTable):
         courses = []
         for subject in mainTable.findAll( text="Subject" ):
+            typeToCourse = {}
+
             headerRow = subject.findParents( "tr" )[0]
             subjectRow = headerRow.findNextSibling( "tr" )
             details = [e.string.strip() for e in subjectRow.findAll( "td", align="center" )]
@@ -149,7 +156,7 @@ class WaterlooCourseParser(object):
 
                 texts = []
                 for td in tds:
-                    tdText =  " ".join( e.strip() for e in td.contents if type(e) == NavigableString)
+                    tdText =  " ".join( cleanString(e) for e in td.contents if type(e) == NavigableString)
                     texts.append(tdText)
                     try:
                         colspan = int(td['colspan'])
@@ -194,6 +201,7 @@ class WaterlooCourseParser(object):
                     try:
                         texts[dateIndex].upper().index("TBA")
                         logging.info("Ignoring 'to be announced' %s section %s" % (waterlooCourse.uniqueName, sectionNum))
+                        print "TBA"
                         continue
                     except ValueError:
                         pass
@@ -205,15 +213,21 @@ class WaterlooCourseParser(object):
                     except ValueError:
                         pass
 
-                    # Next row may represent the same course with more helpful information
+                    # We have encountered a new "type" in the rows
+                    # This may be "LEC" or "TUT". We should check if we have seen it before
+                    # and switch the parent of upcoming sections accordingly
                     if not waterlooCourse.type:
                         waterlooCourse.type = courseType
+                        typeToCourse[waterlooCourse.type] = waterlooCourse
+
                     elif waterlooCourse.type != courseType:
-                        if self.checkCourseAgainstOptions(waterlooCourse):
-                            courses.append(waterlooCourse)
-                        waterlooCourse = copy.deepcopy(waterlooCourse)
-                        waterlooCourse.sections = []
-                        waterlooCourse.type = courseType
+                        if courseType in typeToCourse:
+                            waterlooCourse = typeToCourse[courseType]
+                        else:
+                            waterlooCourse = copy.deepcopy(waterlooCourse)
+                            waterlooCourse.sections = []
+                            waterlooCourse.type = courseType
+                            typeToCourse[courseType] = waterlooCourse
 
                     courseSection.sectionNum = sectionNum
                     courseSection.courseName = waterlooCourse.uniqueName
@@ -256,6 +270,7 @@ class WaterlooCourseParser(object):
 
                     try:
                         if self.globalOptions["show_full_courses"] == False and courseSection.full():
+                            logging.info("Ignoring full section %s section %s" % (waterlooCourse.uniqueName, sectionNum))
                             continue
 
                     except (KeyError, ValueError), e:
@@ -267,8 +282,8 @@ class WaterlooCourseParser(object):
                     lastValid = True
                     waterlooCourse.addSection( courseSection ) 
 
-            if self.checkCourseAgainstOptions(waterlooCourse):
-                courses.append( waterlooCourse )
+            #Take all courses from the type hash
+            courses += [e for e in typeToCourse.values() if self.checkCourseAgainstOptions(e)]
 
         if len( courses ) == 0:
             raise QualifierExceptions.CourseMissingException()

@@ -1,5 +1,16 @@
 Changelog:
 ---------------------
+/ September 4, 2010 /
+---------------------
+- Fixed a bug with the new Dubai campus courses screwing up my parsing
+  algorithm
+- Refactored the data model for conflicts
+- Added a bunch of unit tests to do code cleanup
+- Lots of code sanitization. I'm anticipating passing this site onto another
+  group to take care of after I graduate, we'll see how it goes. If it falls
+  through and possibly if it doesn't I'll open source the code on github.
+
+---------------------
 / November 21, 2009 /
 ---------------------
 - Fixed a bug that would return nothing if two required sections were held for the same

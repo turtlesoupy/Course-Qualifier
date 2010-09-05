@@ -39,14 +39,3 @@ class WaterlooCourse:
 
     def addSection( self, section ):
         self.sections.append( section )
-
-
-def test():
-   f = open( "math135.htm", "r" ) 
-   html = f.read()
-   f.close()
-
-   print [e.jsonDump() for e in constructCourses( html ) ]
-
-if __name__ == "__main__":
-    test()
