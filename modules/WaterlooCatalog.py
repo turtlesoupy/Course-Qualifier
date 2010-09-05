@@ -23,7 +23,7 @@ class WaterlooCatalog( object ):
         self.computeMetrics()
 
     def computeMetrics( self ):
-        self.metrics["days_full"] = self.computeValidDays()
+        self.metrics["days_full"] = self.computeDaysFull()
         self.metrics["idle_time"] = self.computeIdleTime()
         self.metrics["earliest_start"] = self.computeEarliestStartTime()
         self.metrics["latest_end"] = self.computeLatestEndTime()
@@ -47,14 +47,20 @@ class WaterlooCatalog( object ):
         else:
             return float(sum(rmpRatings)) / len(rmpRatings)
 
-    def computeValidDays(self):
+    def computeDaysFull(self):
         return len(set(o.day for o in itertools.chain(*[e.offerings for e in self.sections])))
 
     def computeEarliestStartTime(self):
-        return min(o.startTime for o in itertools.chain(*[e.offerings for e in self.sections]))
+        try:
+            return min(o.startTime for o in itertools.chain(*[e.offerings for e in self.sections]))
+        except ValueError:
+            return None
 
     def computeLatestEndTime(self):
-        return max(o.endTime for o in itertools.chain(*[e.offerings for e in self.sections]))
+        try:
+            return max(o.endTime for o in itertools.chain(*[e.offerings for e in self.sections]))
+        except ValueError:
+            return None
 
     def computeLateness(self):
         maxTime = 24*60*60 * sum(len(e.offerings) for e in self.sections)

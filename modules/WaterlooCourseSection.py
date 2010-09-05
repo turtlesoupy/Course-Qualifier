@@ -48,24 +48,6 @@ class WaterlooCourseSection:
     def __hash__( self ):
         return hash(self.uniqueName + self.courseName)
 
-    def dump( self ):
-        return """WaterlooCourseSection: %(name)s Instructor:'%(instructor)s' Room:'%(room)s' valid:'%(times)s""" % \
-                {"name": self.uniqueName, "instructor": self.instructor, "room": self.room}
-
-    def getJson( self ):
-        return {  "unique_name": self.uniqueName,
-                "section_num": self.sectionNum,
-                "instructor": self.instructor,
-                "room": self.room,
-                "campus": self.campus,
-                "offerings":   [e.getJson() for e in self.offerings],
-                "related1" : self.related1,
-                "related2" : self.related2,
-                "rmp_quality" : self.rateMyProfessorsQuality,
-                "rmp_ease" : self.rateMyProfessorsEase,
-                "rmp_url"  : self.rateMyProfessorsURL,
-                "date_string" : self.dateString
-            } 
 
     def addOfferings(self, newOfferings):
         self.offerings += newOfferings
@@ -74,20 +56,13 @@ class WaterlooCourseSection:
     def addDateString(self, dateStr):
         self.dateString = ("%s %s" % (self.dateString, dateStr)).strip()
 
-    def getReferenceJson( self ):
-        return {
-                    "courseName": self.courseName,
-                    "sectionName": self.uniqueName
-                }
 
     def full( self ):
         if self.enrlCap == -1 or self.enrlTot == -1:
-            return True
+            return False
 
         return self.enrlTot >= self.enrlCap
 
-    def jsonDump( self ):
-        return simplejson.dumps( self.getJson() )
 
     def setRateMyProfessorsInfo( self ):
         if not enableRateMyProfessors:
@@ -134,3 +109,31 @@ class WaterlooCourseSection:
                 return False
 
         return True
+
+    def getReferenceJson( self ):
+        return {
+                    "courseName": self.courseName,
+                    "sectionName": self.uniqueName
+                }
+
+    def jsonDump( self ):
+        return simplejson.dumps( self.getJson() )
+
+    def dump( self ):
+        return """WaterlooCourseSection: %(name)s Instructor:'%(instructor)s' Room:'%(room)s' valid:'%(times)s""" % \
+                {"name": self.uniqueName, "instructor": self.instructor, "room": self.room}
+
+    def getJson( self ):
+        return {  "unique_name": self.uniqueName,
+                "section_num": self.sectionNum,
+                "instructor": self.instructor,
+                "room": self.room,
+                "campus": self.campus,
+                "offerings":   [e.getJson() for e in self.offerings],
+                "related1" : self.related1,
+                "related2" : self.related2,
+                "rmp_quality" : self.rateMyProfessorsQuality,
+                "rmp_ease" : self.rateMyProfessorsEase,
+                "rmp_url"  : self.rateMyProfessorsURL,
+                "date_string" : self.dateString
+            } 
