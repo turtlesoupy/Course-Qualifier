@@ -34,8 +34,8 @@ def cross(*args):
 
 class WaterlooDesiredCourse:
     def __init__( self, courseSubject, courseCode, options ):
-        self.subject = courseSubject.upper()
-        self.code = courseCode.upper()
+        self.subject = courseSubject.upper().strip()
+        self.code = courseCode.upper().strip()
         self.options = options
         if (len(self.code) > 0 and self.code[-1] == "*"):
             self.doSearch = True
@@ -130,8 +130,12 @@ class WaterlooDispatcher(object):
                 #A "course group" is something like [AMATH 250 TUT, AMATH 250 LEC]
                 #i.e. two 'courses' that have to be taken concurrently
                 groups = []
-                sortedCourse = sorted(courseObjects, attrgetter('courseName'))
-                for k,g in itertools.groupby(courseObjects, attrgetter('courseName')):
+
+                #Workaround - Waterloo's page returns too much for a match of "2*"
+                sortedCourse = sorted(
+                        (e for e in courseObjects if e.courseCode.startswith(desiredCourse.code)),
+                        key=attrgetter('courseName'))
+                for k,g in itertools.groupby(sortedCourse, attrgetter('courseName')):
                     groups.append(list(g))
                 toSearch.append(groups)
             else:

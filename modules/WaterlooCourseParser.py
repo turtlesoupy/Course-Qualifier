@@ -114,6 +114,8 @@ class WaterlooCourseParser(object):
 
             waterlooCourse = WaterlooCourse()
             waterlooCourse.courseName = "%s %s" % (details[0], details[1] )
+            waterlooCourse.courseSubject = cleanString(details[0])
+            waterlooCourse.courseCode = cleanString(details[1])
             if len( details ) == 4:
                 try:
                     waterlooCourse.creditWorth = float(details[2])

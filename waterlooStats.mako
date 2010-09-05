@@ -37,7 +37,6 @@
             <span class="bigText">Statistics!</span>
         </p>
         <p class="emailText">
-            Generated every hour!<br />
             Last generation: ${datetime.datetime.now().strftime( "%d %b at %I:%M %p" )}
         </p>
     </div>

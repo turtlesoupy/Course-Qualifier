@@ -8,7 +8,9 @@ from WaterlooCourseSection import WaterlooCourseSection
 
 class WaterlooCourse:
     def __init__( self ):
-        self.courseName = ""
+        self.courseName = "" #Subject + Code
+        self.courseSubject = ""
+        self.courseCode = ""
         self.alternateName = ""
         self.description = ""
         self.creditWorth = 0
