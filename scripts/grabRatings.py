@@ -7,7 +7,6 @@ import urllib
 from optparse import OptionParser
 from pysqlite2 import dbapi2 as sqlite
 
-
 baseURL = "http://www.ratemyprofessors.com/"
 database = "rate_my_professors.db"
 

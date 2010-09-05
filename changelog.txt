@@ -9,6 +9,7 @@ Changelog:
 - Lots of code sanitization. I'm anticipating passing this site onto another
   group to take care of after I graduate, we'll see how it goes. If it falls
   through and possibly if it doesn't I'll open source the code on github.
+- Updated YUI to 2.8.1. Made some slight stylistic changes
 
 ---------------------
 / November 21, 2009 /
