@@ -90,25 +90,16 @@ class WaterlooCourseSection:
 
     def conflictsWith( self, otherSection ):
         for o1 in self.offerings:
-            for o2 in otherSection.offerings:
-                if o1.conflictsWith(o2):
-                    return True
+            if any(o1.conflictsWith(o2) for o2 in otherSection.offerings):
+                return True
 
         return False
 
     def startsAfter( self, time ):
-        for o in self.offerings:
-            if o.startTime < time:
-                return False
-
-        return True
+        return not any(o.startTime < time for o in self.offerings)
 
     def endsEarlier( self, time ):
-        for o in self.offerings:
-            if o.endTime > time:
-                return False
-
-        return True
+        return not any(o.endTime > time for o in self.offerings)
 
     def getReferenceJson( self ):
         return {
