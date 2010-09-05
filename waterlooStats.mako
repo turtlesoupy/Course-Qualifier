@@ -94,7 +94,7 @@
                     <tr>
                         <td> ${subject} ${course} </td>
                         <td> ${percentage( num, S.numRequestCourses() )}% (${num}) </td>
-                    </td>
+                    </tr>
                 %endfor
             </table>
         </div>
