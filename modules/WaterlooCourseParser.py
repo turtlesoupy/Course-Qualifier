@@ -201,7 +201,6 @@ class WaterlooCourseParser(object):
                     try:
                         texts[dateIndex].upper().index("TBA")
                         logging.info("Ignoring 'to be announced' %s section %s" % (waterlooCourse.uniqueName, sectionNum))
-                        print "TBA"
                         continue
                     except ValueError:
                         pass
