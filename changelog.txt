@@ -1,5 +1,10 @@
 Changelog:
 ---------------------
+/ September 10, 2010 /
+---------------------
+- Graduate search courses are now supported (e.g. CS 6*)
+
+---------------------
 / September 4, 2010 /
 ---------------------
 - Fixed a bug with the new Dubai campus courses screwing up my parsing
