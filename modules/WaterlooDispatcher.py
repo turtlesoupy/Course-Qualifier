@@ -202,7 +202,6 @@ class WaterlooDispatcher(object):
 
 
     def getCourseObjects(self, desiredCourses):
-        #TODO: make search work for graduate courses
         courseObjects = []
         possibleGradCourses = []
 
@@ -211,7 +210,12 @@ class WaterlooDispatcher(object):
         for desiredCourse, html in zip(desiredCourses, undergradList):
             parser = WaterlooCourseParser(desiredCourse.options, self.options)
             try:
-                courseObjects.append((desiredCourse, parser.parseHTML(html)))
+                courses = parser.parseHTML(html)
+                #Fix for grad searches - 6* has to match start, if not try searching grad
+                if any(e.courseCode.startswith(desiredCourse.code) for e in courses):
+                    courseObjects.append((desiredCourse, parser.parseHTML(html)))
+                else:
+                    raise QualifierExceptions.CourseMissingException("Missing course")
             except QualifierExceptions.CourseMissingException:
                 possibleGradCourses.append(desiredCourse)
 
