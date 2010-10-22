@@ -255,7 +255,6 @@ class WaterlooCourseParser(object):
                     if instructorIndex:
                         try:
                             courseSection.instructor = texts[instructorIndex]
-                            courseSection.setRateMyProfessorsInfo()
                         except IndexError:
                             pass
                     if rel1Index and not texts[rel1Index].isspace():

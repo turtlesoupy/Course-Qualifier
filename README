@@ -1,13 +1,10 @@
-/ ------------------------- /
-/ Waterloo Course Qualifier /
-/-------------------------- /
-Copyright 2007-2010 by Thomas Dimson
+(Waterloo) Course Qualifier
+See LICENSE for licensing information (GPLv2)
 
 Usage:
     - Unzip the package to a folder that is exposed by a web server. Make sure
       that .py is configured to be handled by CGI (provided by my .htaccess)
-    - Bootstrap the rate my professors database and statistics database
-      (instructions are in script/readme.txt)
+    - Bootstrap the statistics database (instructions are in script/readme.txt)
     - Ensure that the databases are writable by the server process. Ensure that
       qualifyCGI.py and makePDFCalendarCGI.py are executable. Ensure that all 
       other files are 755

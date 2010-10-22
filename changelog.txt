@@ -1,5 +1,11 @@
 Changelog:
 ---------------------
+/ October 21, 2010   /
+---------------------
+- Github upload
+- Branched rate my professors from mainline
+
+---------------------
 / September 10, 2010 /
 ---------------------
 - Graduate search courses are now supported (e.g. CS 6*)

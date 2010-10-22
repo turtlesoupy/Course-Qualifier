@@ -745,12 +745,7 @@ function createCatalogInformation( rowData, sections, responseData )
             {
                 continue;
             }
-            if( sectionInfo.key == "rmp_quality" || sectionInfo.key == "rmp_ease" ) {
-                courseHTML.innerHTML += "<span class='course_detail_header'>" + sectionInfo.name + ":</span> " + 
-                    "<a href='" + detailedSection['rmp_url'] + "' target='_blank'>" + detailedSection[sectionInfo.key] + "</a>" + " <br />";
-            } else {
                 courseHTML.innerHTML += "<span class='course_detail_header'>" + sectionInfo.name + ":</span> " + detailedSection[sectionInfo.key] + " <br />";
-            }
         }
 
         courseInfo.appendChild( courseHTML );

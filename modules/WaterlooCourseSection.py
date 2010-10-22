@@ -5,14 +5,6 @@ import simplejson
 from KeyedObject import KeyedObject
 import QualifierExceptions
 
-try:
-    import Databases
-    from pysqlite2 import dbapi2 as sqlite
-    enableRateMyProfessors = True
-    rateMyProfessorsCon = sqlite.connect( Databases.rateMyProfessorsDatabase )
-except ImportError:
-    enableRateMyProfessors = False
-
 class WaterlooCourseSection:
     c_date_map = { "M": 1, "T": 2, "W": 3, "Th": 4, "F": 5, "S": 6 }
     c_date_re = re.compile( "(\d{2}):(\d{2})-(\d{2}):(\d{2})(\w+)" )
@@ -21,9 +13,7 @@ class WaterlooCourseSection:
         KeyedObject( "Catalog Number", "unique_name").getJson(),
         KeyedObject( "Time(s)", "date_string").getJson(),
         KeyedObject( "Room", "room" ).getJson(),
-        KeyedObject( "Instructor", "instructor" ).getJson(),
-        KeyedObject( "Rate My Professors Quality", "rmp_quality" ).getJson(),
-        KeyedObject( "Rate My Professors Ease", "rmp_ease" ).getJson()
+        KeyedObject( "Instructor", "instructor" ).getJson()
     ]
 
     def __init__( self, parent ):
@@ -40,9 +30,6 @@ class WaterlooCourseSection:
         self.enrlTot = -1
         self.hasValidDate = False
         self.offerings  = []
-        self.rateMyProfessorsQuality = None
-        self.rateMyProfessorsEase = None
-        self.rateMyProfessorsURL  = None
         self.dateString = ""
 
     def __hash__( self ):
@@ -62,31 +49,6 @@ class WaterlooCourseSection:
             return False
 
         return self.enrlTot >= self.enrlCap
-
-
-    def setRateMyProfessorsInfo( self ):
-        if not enableRateMyProfessors:
-            return
-
-        try:
-            last, first = self.instructor.split(",")
-        except ValueError:
-            return
-
-        try:
-            matchFirst=  first[:first.index(" ") + 1]
-        except ValueError:
-            matchFirst = first
-
-        cursor = rateMyProfessorsCon.cursor()
-        cursor.execute( "SELECT first_name, last_name, quality, ease, url  FROM waterloo WHERE UPPER(last_name)=?", (last.upper(),) )
-
-        for row in cursor:
-            if row[0].lower().startswith( matchFirst.lower() ) or matchFirst.lower().startswith( row[0].lower() ):
-                self.rateMyProfessorsQuality = row[2]
-                self.rateMyProfessorsEase = row[3] 
-                self.rateMyProfessorsURL  = row[4] 
-                break
 
     def conflictsWith( self, otherSection ):
         for o1 in self.offerings:
@@ -123,8 +85,5 @@ class WaterlooCourseSection:
                 "offerings":   [e.getJson() for e in self.offerings],
                 "related1" : self.related1,
                 "related2" : self.related2,
-                "rmp_quality" : self.rateMyProfessorsQuality,
-                "rmp_ease" : self.rateMyProfessorsEase,
-                "rmp_url"  : self.rateMyProfessorsURL,
                 "date_string" : self.dateString
             } 

@@ -24,16 +24,6 @@ class TestWaterlooCatalog(unittest.TestCase):
         sec2.addOfferings(WaterlooCourseOffering.offeringsFromDateString("17:00-17:50T"))
         self.assertEqual(10*60 + 3*60*60, catalog.computeIdleTime())
 
-    def test_computeRateMyProfessorsQuality(self):
-        sec1 = WaterlooCourseSection(self.dummyCourse)
-        sec2 = WaterlooCourseSection(self.dummyCourse)
-        catalog = WaterlooCatalog([sec1, sec2])
-        self.assertEqual(None, catalog.computeRateMyProfessorsQuality())
-        sec1.rateMyProfessorsQuality = 4.0
-        self.assertEqual(4.0, catalog.computeRateMyProfessorsQuality())
-        sec2.rateMyProfessorsQuality = 2.0
-        self.assertEqual(3.0, catalog.computeRateMyProfessorsQuality())
-
     def test_computeDaysFull(self):
         sec1 = WaterlooCourseSection(self.dummyCourse)
         sec2 = WaterlooCourseSection(self.dummyCourse)
