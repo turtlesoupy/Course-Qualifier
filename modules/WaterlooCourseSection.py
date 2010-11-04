@@ -4,6 +4,7 @@ import logging
 import simplejson
 from KeyedObject import KeyedObject
 import QualifierExceptions
+from WaterlooCourseOffering import WaterlooCourseOffering
 
 class WaterlooCourseSection:
     c_date_map = { "M": 1, "T": 2, "W": 3, "Th": 4, "F": 5, "S": 6 }
@@ -38,6 +39,7 @@ class WaterlooCourseSection:
 
     def addOfferings(self, newOfferings):
         self.offerings += newOfferings
+        self.offerings = WaterlooCourseOffering.uniqueOfferings(self.offerings) #Removes weird parse errors
         self.hasValidDate = len(self.offerings) > 0
 
     def addDateString(self, dateStr):
