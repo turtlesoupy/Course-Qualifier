@@ -1,5 +1,11 @@
 Changelog:
 ---------------------
+/ November 4, 2010   /
+---------------------
+- Fixed more Dubai campus troubles
+- Fixed weirdo bug with negative idle time
+
+---------------------
 / October 21, 2010   /
 ---------------------
 - Github upload

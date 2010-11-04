@@ -1,11 +1,24 @@
 import os
 import re
 import sys
+import logging
 import simplejson
 
 # This class can be expanded to include biweekly offerings
 class WaterlooCourseOffering(object):
     dateRE = re.compile( "(\d{2}):(\d{2})-(\d{2}):(\d{2})(\w+)" )
+
+    @classmethod
+    def uniqueOfferings(cls, offerList):
+        ret = []
+        for o1 in offerList:
+            for o2 in ret:
+                if o1.day == o2.day and o1.startTime == o2.startTime and o1.endTime == o2.endTime:
+                    break
+            else:
+                ret.append(o1)
+
+        return ret
 
     @classmethod
     def offeringsFromDateString(cls, dateStr):
@@ -42,7 +55,7 @@ class WaterlooCourseOffering(object):
 
         return [WaterlooWeeklyOffering(
             WaterlooWeeklyOffering.STRING_TO_DAY[day], 
-            startTimeSeconds, endTimeSeconds) for day in validDays]
+            startTimeSeconds, endTimeSeconds) for day in validDays if day in WaterlooWeeklyOffering.STRING_TO_DAY]
 
     def getJson(self):
         return {
