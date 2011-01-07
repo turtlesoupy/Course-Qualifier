@@ -3,7 +3,7 @@ var loadingDialog = null;
 var advancedOptionsOverlay;
 var qualifierTable;
 var qualifyRequest;
-
+var totalEndTime = 0;
 
 /**
 *
@@ -779,6 +779,13 @@ function createCalendar( courseData, sections )
     if(maxEndTime > realEndTime) {
         realEndTime = maxEndTime + 1*60*60;
     }
+    if( realEndTime > totalEndTime )
+    {
+        totalEndTime = realEndTime;
+    } else if ( totalEndTime > realEndTime ) 
+    {
+        realEndTime = totalEndTime;
+    }
     
     for(i = realStartTime; i <= realEndTime; i+= stepSize) {
         var row = document.createElement( "tr" );
@@ -907,4 +914,23 @@ function qualifyErrorCallback()
 
    hideLoadingDialog();
    displayError( "Error communicating with server"); 
+}
+
+function checkArrowKeys(e) 
+{
+    // we haven't generated a table yet
+    if ( totalEndTime == 0 )
+    {
+        return;
+    }
+
+    var e = window.event ? window.event : e;
+    if ( e.keyCode == 37 )
+    {
+        selectPreviousRow(e);
+    }
+    else if ( e.keyCode == 39 )
+    {
+        selectNextRow(e);
+    }
 }
