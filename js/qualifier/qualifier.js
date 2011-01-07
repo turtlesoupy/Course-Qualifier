@@ -511,8 +511,6 @@ function selectNextRow(e)
 
 function createQualifierGrid( data ) 
 {
-    
-
     var i;
     var j;
     var columns = [];
@@ -525,15 +523,6 @@ function createQualifierGrid( data )
     for( var course in data.courses )
     {
         var resolved = data.courses[course];
-        /* Disabled for now, let's see if we need them
-        columns.push(
-        {
-            key: resolved.courseName,
-            label: resolved.courseName
-        });
-        */
-
-        
         rowSelected.courses.push( resolved.courseName);
 
         gridFields.push( resolved.courseName );
@@ -563,66 +552,53 @@ function createQualifierGrid( data )
         gridFields.push( data.valid_metrics[i] );
     }
 
-    for( i =0; i < data.catalogs.length; i++ )
-    {
+    for( i =0; i < data.catalogs.length; i++ ) {
         var catalog = data.catalogs[i];
         var row = {};
 
         row.id = i +1;
 
-        for( j =0; j < catalog.sections.length; j++ )
-        {
+        for( j =0; j < catalog.sections.length; j++ ) {
             var section = catalog.sections[j];
             row[section.courseName] = section.sectionName;
         }
 
-        for( var metric in  catalog.metrics )
-        {
-            if( catalog.metrics[metric] == null )
-            {
+        for( var metric in  catalog.metrics ) {
+            if( catalog.metrics[metric] == null ) {
                 row[metric] = "";
             }
-            else if( catalog.metrics[metric] && (metricTypes[metric] == "time" || metricTypes[metric] == "duration" ))
-            {
+            else if( catalog.metrics[metric] && (metricTypes[metric] == "time" || metricTypes[metric] == "duration" )) {
                 row[metric]  = catalog.metrics[metric].toTimeOfDay();
             }
-            else if( metricTypes[metric] == "percentage" )
-            {
+            else if( metricTypes[metric] == "percentage") {
                 row[metric] = (catalog.metrics[metric] * 100).toFixed(1) + "%";
             }
-            else if( metricTypes[metric] == "number" )
-            {
-                if( Math.round(catalog.metrics[metric]) != catalog.metrics[metric] )
-                {
+            else if( metricTypes[metric] == "number" ) {
+                if( Math.round(catalog.metrics[metric]) != catalog.metrics[metric] ) {
                     row[metric]  = catalog.metrics[metric].toFixed(2);
                 }
-                else
-                {
-
+                else {
                     row[metric]  = catalog.metrics[metric];
                 }
             }
-            else
-            {
-
+            else {
                 row[metric]  = catalog.metrics[metric];
             }
         }
         
-        gridData.push( row );
+        gridData.push(row);
     }
 
     var myDataSource = new YAHOO.util.DataSource(gridData);
     myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
     myDataSource.responseSchema = {
         fields: gridFields
-        };
+    };
 
-    qualifierTable = new YAHOO.widget.DataTable("qualifier_grid", columns, myDataSource,
-        {
+    qualifierTable = new YAHOO.widget.DataTable("qualifier_grid", columns, myDataSource, {
             caption: "Click row for schedule details",
             selectionMode: "single"
-        }); 
+    }); 
     qualifierTable.subscribe( "rowClickEvent", qualifierTable.onEventSelectRow);
     qualifierTable.subscribe( "rowClickEvent", rowSelected ); 
     qualifierTable.subscribe( "rowMouseoverEvent", qualifierTable.onEventHighlightRow);
@@ -632,20 +608,18 @@ function createQualifierGrid( data )
     rowSelected.responseData =  data;
 }
 
-function rowSelected(e, scrollToGrid ) 
-{
+function rowSelected(e, scrollToGrid ) {
     var i;
     var responseData = rowSelected.responseData;
-    var rowData =  qualifierTable.getRecord( e.target).getData() ;
+    var rowData =  qualifierTable.getRecord(e.target).getData() ;
     var courses = rowSelected.courses;
     var sections = {};
 
-    for( i = 0; i < courses.length; i++ ) 
-    {
+    for( i = 0; i < courses.length; i++ ) {
         var course = courses[i];
-	if( rowData[course] != null ) {
-		sections[ course] = rowData[course];
-	}
+        if( rowData[course] != null ) {
+            sections[course] = rowData[course];
+        }
     }
 
     trTarget = qualifierTable.getTrEl(e.target);
@@ -657,24 +631,21 @@ function rowSelected(e, scrollToGrid )
     numberLabel = document.getElementById( "row_select_number" );
     numberLabel.innerHTML = selectedIndex + " / " + numRows;
 
-    createCalendar( responseData.courses, sections );
-    createCatalogInformation( rowData, sections , responseData );
+    createCalendar(responseData.courses, sections);
+    createCatalogInformation(rowData, sections, responseData);
 
-    if( scrollToGrid != false )
-    {
+    if( scrollToGrid != false ) {
         location.hash = 'none';
         location.hash = 'qualify_calendar_anchor';
     }
 }
 
-function hideCatalogInformation()
-{
+function hideCatalogInformation() {
     var informationLocation = document.getElementById("catalog_information");
     informationLocation.innerHTML = ""; 
 }
 
-function createPDF( e)
-{
+function createPDF(e) {
     YAHOO.util.Event.preventDefault(e);
     var request = {
         row_data : createPDF.rowData,
@@ -684,13 +655,12 @@ function createPDF( e)
 
     document.pdf_form.ugly_url.value = Base64.encode(YAHOO.lang.JSON.stringify(request));
     document.pdf_form.submit();
-
 }
 
-function createCatalogInformation( rowData, sections, responseData )
-{
+function createCatalogInformation(rowData, sections, responseData) {
     var i;
     var informationLocation = document.getElementById("catalog_information");
+
     
     hideCatalogInformation();
 
@@ -703,7 +673,6 @@ function createCatalogInformation( rowData, sections, responseData )
 
 
     /* This is just repeated info, I'll hide it for now
-
 
     var catalogMetrics = document.createElement( "div" );
     catalogMetrics.setAttribute("class", "metric_detail_list" );
@@ -725,20 +694,16 @@ function createCatalogInformation( rowData, sections, responseData )
     courseInfo.innerHTML = "<h3> Courses </h3> ";
 
     var cNum = 0;
-    for( var course in sections )
-    {
+    for(var course in sections) {
         var courseHTML = document.createElement( "div" );
         courseHTML.setAttribute("class", "course_details");
-        courseHTML.innerHTML = "<div class='course_detail_title'>" +  course + "</div>";
+        courseHTML.innerHTML = "<div class='course_detail_name'>" +  course + "</div>";
 
         var detailedCourse = responseData.courses[course];
-
-        courseHTML.innerHTML += "<div class='course_detail_description'>" +  detailedCourse.description + "</div>";
-
+        courseHTML.innerHTML += "<div class='course_detail_title'>" +  detailedCourse.title + "</div>";
         var detailedSection = responseData.courses[course].sections[sections[course]];
 
-        for(  i=0; i < responseData.section_information.length; i++ )
-        {
+        for(  i=0; i < responseData.section_information.length; i++ ) {
             var sectionInfo = responseData.section_information[i]; 
             var personalInfo = detailedSection[sectionInfo.key];
             if( !personalInfo || personalInfo == "" || personalInfo == null ) 
@@ -779,10 +744,8 @@ function createCalendar( courseData, sections )
     var minStartTime = 9999999;
     var maxEndTime = 0;
 
-
     // First pass to determine the "width" and "height" of the table
-    for( var section in sections )
-    {
+    for( var section in sections) {
         var sectionInfo = courseData[section].sections[sections[section]];
         var offerings  = sectionInfo.offerings;
         for(var j = 0; j < offerings.length; j++) {
@@ -791,7 +754,6 @@ function createCalendar( courseData, sections )
         }
     }
 
-
     var table = document.createElement( "table" );
     var tableBody = document.createElement( "tbody" );
     var tableHeader = document.createElement( "thead" );
@@ -799,8 +761,7 @@ function createCalendar( courseData, sections )
     var timeHeader = document.createElement( "th" );
     timeHeader.appendChild( document.createTextNode( "Time" ) );
     headerRow.appendChild( timeHeader );
-    for( i =0; i< validDays.length; i++ )
-    {
+    for( i =0; i< validDays.length; i++ ) {
         var headerNode = document.createElement( "th" );
         var textNode = document.createTextNode( validDays[i] );
         headerNode.appendChild( textNode );
@@ -812,24 +773,20 @@ function createCalendar( courseData, sections )
     var realStartTime = 8*60*60;
     var realEndTime = 20*60*60;
         
-    if( minStartTime < realStartTime )
-    {
+    if(minStartTime < realStartTime) {
         realStartTime = minStartTime - 2*60*60;
     }
-    if( maxEndTime > realEndTime )
-    {
+    if(maxEndTime > realEndTime) {
         realEndTime = maxEndTime + 1*60*60;
     }
     
-    for( i = realStartTime; i <= realEndTime; i+= stepSize )
-    {
+    for(i = realStartTime; i <= realEndTime; i+= stepSize) {
         var row = document.createElement( "tr" );
         var tdNode = document.createElement("td" );
         tdNode.appendChild( document.createTextNode( i.toTimeOfDay() ) );
         tdNode.className = "time";
         row.appendChild( tdNode );
-        for( j = 0; j < validDays.length; j++ )
-        {
+        for( j = 0; j < validDays.length; j++) {
             var tdNode = document.createElement("td" );
             tdNode.innerHTML = "&nbsp;";
             tdNode.className = "empty";
@@ -844,31 +801,27 @@ function createCalendar( courseData, sections )
     var startBucket = parseInt( realStartTime / stepSize );
     var endBucket = parseInt( realEndTime / stepSize );
     var i = 0;
-    for( var course in sections )
-    {
+    for(var course in sections) {
         var courseInfo = courseData[course];
         var sectionInfo = courseInfo.sections[sections[course]];
         var offerings = sectionInfo.offerings;
+
         for(j = 0; j < offerings.length; j++) {
             var offering  = offerings[j];
             var startTime = offering.start_time;
             var endTime   = offering.end_time;
 
             if(startTime && endTime) {
-                for( var k = startTime; k <= endTime; k += stepSize )
-                {
+                for( var k = startTime; k <= endTime; k += stepSize ) {
                     var bucket = parseInt(k / stepSize) - startBucket;
                     var cols = tableRows[bucket].childNodes;
-                    if( k == startTime )
-                    {
+                    if(k == startTime) {
                         cols[offering.day + 1].appendChild( document.createTextNode( courseInfo.courseName + " " ) );
                     }
-                    else if ( k == startTime + stepSize )
-                    {
-                        cols[offering.day + 1].appendChild( document.createTextNode( sectionInfo.room + " " ) );
+                    else if (k == startTime + stepSize) {
+                        cols[offering.day + 1].appendChild( document.createTextNode( sectionInfo.building_room + " " ) );
                     }
-                    else
-                    {
+                    else {
                         cols[offering.day + 1].appendChild( document.createTextNode(  " " ) );
                     }
 

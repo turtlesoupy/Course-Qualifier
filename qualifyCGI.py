@@ -9,12 +9,14 @@ import traceback
 sys.path.append( os.path.join( sys.path[0], "modules" ) )
 
 import simplejson
+import QualifierConfig
 import QualifierExceptions
 
 def main():
     print "Content-Type: text/json"
     print
 
+    QualifierConfig.readDefault()
     jsonLogStream = cStringIO.StringIO()
     console = logging.StreamHandler( jsonLogStream )
     formatter = logging.Formatter( "%(levelname)s: %(message)s" )
@@ -34,7 +36,6 @@ def main():
         raise RuntimeError( "Unsupported school specified!" )
 
     
-
     try:
         blah = Dispatcher( jsonInput)
         simplejson.dump( {"result": blah.dispatch(), "info": jsonLogStream.getvalue() }, jsonOutput )
@@ -42,33 +43,6 @@ def main():
         simplejson.dump( {"exception": e.getJson() }, jsonOutput )
 
     print '%s' % jsonOutput.getvalue()
-
-
-def test():
-    jsonInput = {
-            "school": "waterloo",
-            "term": "Spring 2008",
-            "courses": [ 
-                    {
-                    "courseSubject": "CS",
-                    "courseCode": 245,
-                    "options" : {'tutorials': False, 'tests': False}
-                    },
-                    {
-                    "courseSubject": "MATH",
-                    "courseCode": 136,
-                    "options" : {'tutorials': False, 'tests': False}
-                    }
-                ]
-            }
-
-    from WaterlooDispatcher import WaterlooDispatcher as Dispatcher
-
-    blah = Dispatcher( jsonInput )
-    if len( sys.argv ) == 1:
-        blah.dispatch()
-    else:
-        print simplejson.dumps( blah.dispatch(), indent=4 )
 
 if __name__ == "__main__":
     try:

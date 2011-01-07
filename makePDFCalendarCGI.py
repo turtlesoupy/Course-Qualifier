@@ -94,7 +94,7 @@ def createTable(requestDict):
             row = (start - realStart) / stepSize
             rowEnd = (end - realStart) / stepSize
             col = offering["day"] + 1
-            data[row][col] = Paragraph("<para leading='9' align='center' fontsize='7.5'>%s<br/>%s</para>" % (course, sectionInfo["room"] ), styles["BodyText"] )
+            data[row][col] = Paragraph("<para leading='9' align='center' fontsize='7.5'>%s<br/>%s</para>" % (course, sectionInfo["building_room"] ), styles["BodyText"] )
             style.append( ("BACKGROUND", (col, row+1), (col, rowEnd +1), color ) )
             style.append( ("SPAN", (col,row+1), (col,rowEnd+1)) )
 
@@ -141,7 +141,7 @@ def createCatalogInformation( requestDict ):
 <font size="6" face="times-italic">%s</font> <br />
 <font size="7.5">%s</font>
 </para>
-""" % (course, saxutils.escape(courseInfo["description"]), "<br />".join( lines )), styles["BodyText"] )
+""" % (course, saxutils.escape(courseInfo["title"]), "<br />".join( lines )), styles["BodyText"] )
 
         newData.append( newParagraph )
         i += 1
@@ -159,7 +159,7 @@ def drawFooter( canvas, document ):
     canvas.saveState()
     canvas.setFont('Courier', 7 )
     canvas.drawString(PAGE_WIDTH - 7*cm, 1.5*cm, "Created by the Course Qualifier" )
-    canvas.drawString(PAGE_WIDTH - 7.1*cm, 1.2*cm, "http://www.coursequalifier.com" )
+    canvas.drawString(PAGE_WIDTH - 6.90*cm, 1.2*cm, "http://www.coursequalifier.com" )
     canvas.restoreState()
 
 def main():

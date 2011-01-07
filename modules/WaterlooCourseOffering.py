@@ -2,7 +2,15 @@ import os
 import re
 import sys
 import logging
+import itertools
 import simplejson
+from operator import attrgetter
+
+def secondsToTime(seconds):
+    hours = seconds / 3600
+    seconds -= 3600*hours
+    minutes = seconds / 60
+    return "%02d:%02d" % (hours, minutes)
 
 # This class can be expanded to include biweekly offerings
 class WaterlooCourseOffering(object):
@@ -19,6 +27,35 @@ class WaterlooCourseOffering(object):
                 ret.append(o1)
 
         return ret
+
+    @classmethod
+    def displayString(cls, offerList):
+        displays = []
+        offerSort = sorted(offerList, key=attrgetter("__class__"))
+        for k,g in itertools.groupby(offerSort, key=attrgetter("__class__")):
+            groups = list(g)
+            displays.append(groups[0].displayString(groups))
+
+        return ", ".join(displays)
+
+    @classmethod
+    def offeringsFromDaysAndTime(cls, days, startTime, endTime):
+        #Hacky parse to differentiate "Th" and "T"
+        curDay = days[0]
+        validDays = []
+        for char in days[1:]:
+            if curDay and char.isupper():
+                validDays.append( curDay )
+                curDay = char
+            else:
+                curDay += char
+
+        validDays.append(curDay)
+
+        return [WaterlooWeeklyOffering(
+            WaterlooWeeklyOffering.STRING_TO_DAY[day], 
+            startTime, endTime) for day in validDays \
+                    if day in WaterlooWeeklyOffering.STRING_TO_DAY]
 
     @classmethod
     def offeringsFromDateString(cls, dateStr):
@@ -84,16 +121,33 @@ class WaterlooWeeklyOffering(WaterlooCourseOffering):
         "Su": SUNDAY
     }
 
+    DAY_TO_STRING = dict((v,k) for k, v in STRING_TO_DAY.iteritems())
+
+
     def __init__(self, day, startTimeSeconds, endTimeSeconds):
         self.day       = day
         self.startTime = startTimeSeconds
         self.endTime   = endTimeSeconds
+
+    def displayString(cls, offerList):
+        displays = []
+        weeklyKey = lambda e: "%s-%s" % (e.startTime, e.endTime)
+        offerSort = sorted(offerList, key=weeklyKey)
+        for k,g in itertools.groupby(offerSort, weeklyKey):
+            groups = list(g)
+            startTime = secondsToTime(groups[0].startTime)
+            endTime   = secondsToTime(groups[0].endTime)
+            displays.append("%s-%s %s" % (startTime, endTime, "".join(\
+                    WaterlooWeeklyOffering.DAY_TO_STRING[e.day] for e in groups)))
+
+        return ", ".join(displays)
 
     #This will need to be a multimethod if I add more types of offerings
     def conflictsWith(self, other):
         return self.day == other.day \
                and self.startTime <= other.endTime \
                and self.endTime >= other.startTime
+
 
     def getJson(self):
         return {

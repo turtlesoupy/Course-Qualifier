@@ -1,5 +1,6 @@
 import re
 import copy
+import string
 import logging
 import simplejson
 from KeyedObject import KeyedObject
@@ -11,16 +12,56 @@ class WaterlooCourseSection:
     c_date_re = re.compile( "(\d{2}):(\d{2})-(\d{2}):(\d{2})(\w+)" )
     sectionInformation = [
         KeyedObject( "Section Number", "section_num").getJson(),
-        KeyedObject( "Catalog Number", "unique_name").getJson(),
+        KeyedObject( "Catalog Number", "class_number").getJson(),
         KeyedObject( "Time(s)", "date_string").getJson(),
-        KeyedObject( "Room", "room" ).getJson(),
-        KeyedObject( "Instructor", "instructor" ).getJson()
+        KeyedObject( "Room", "building_room" ).getJson(),
+        KeyedObject( "Instructor", "instructor" ).getJson(),
+        KeyedObject( "Enrollment", "enrollment" ).getJson()
     ]
 
-    def __init__( self, parent ):
+    @classmethod
+    def fromDataJson(cls, json, courseName):
+        sec = WaterlooCourseSection()
+        grabs = [
+            ('classNumber', 'class_number'),
+            ('campus',   'campus_location'),
+            ('building', 'building'),
+            ('room',     'room'),
+            ('enrlCap',  'enrollment_cap'),
+            ('enrlTot',  'enrollment_total'),
+            ('related1', 'related_component_1'),
+            ('related2', 'related_component_2'),
+            ('instructor', 'instructor'),
+            ('instructorId', 'instructor_id')
+        ]
+
+        for (k, jk) in grabs:
+            if jk in json:
+                setattr(sec, k, json[jk])
+        
+        startTimeInt = int(json['start_time'])
+        endTimeInt   = int(json['end_time'])
+ 
+        startHours   = startTimeInt / 100
+        endHours     = endTimeInt   / 100
+        startMinutes = startTimeInt % 100
+        endMinutes   = endTimeInt   % 100
+
+
+        sec.addOfferings(WaterlooCourseOffering.offeringsFromDaysAndTime(
+            json['days'], startHours * 60 * 60 + startMinutes * 60,
+            endHours * 60 * 60 + endMinutes * 60)) 
+
+        sec.dateString = WaterlooCourseOffering.displayString(sec.offerings)
+        sec.courseName = courseName
+        sec.sectionNum = " ".join(json["component_section"].split()[1:])
+
+        return sec
+
+    def __init__(self, parent=None):
         self.parent = parent
         self.courseName = ""
-        self.uniqueName = ""
+        self.classNumber = ""
         self.instructor = ""
         self.room = ""
         self.campus = ""
@@ -34,7 +75,7 @@ class WaterlooCourseSection:
         self.dateString = ""
 
     def __hash__( self ):
-        return hash(self.uniqueName + self.courseName)
+        return hash(self.classNumber + self.courseName)
 
 
     def addOfferings(self, newOfferings):
@@ -45,8 +86,7 @@ class WaterlooCourseSection:
     def addDateString(self, dateStr):
         self.dateString = ("%s %s" % (self.dateString, dateStr)).strip()
 
-
-    def full( self ):
+    def full(self):
         if self.enrlCap == -1 or self.enrlTot == -1:
             return False
 
@@ -59,16 +99,16 @@ class WaterlooCourseSection:
 
         return False
 
-    def startsAfter( self, time ):
-        return not any(o.startTime < time for o in self.offerings)
+    def startsAfter(self, time):
+        return all(o.startTime >= time for o in self.offerings)
 
-    def endsEarlier( self, time ):
-        return not any(o.endTime > time for o in self.offerings)
+    def endsEarlier(self, time):
+        return all(o.endTime < time for o in self.offerings)
 
-    def getReferenceJson( self ):
+    def getReferenceJson(self):
         return {
                     "courseName": self.courseName,
-                    "sectionName": self.uniqueName
+                    "sectionName": self.classNumber
                 }
 
     def jsonDump( self ):
@@ -76,16 +116,22 @@ class WaterlooCourseSection:
 
     def dump( self ):
         return """WaterlooCourseSection: %(name)s Instructor:'%(instructor)s' Room:'%(room)s' valid:'%(times)s""" % \
-                {"name": self.uniqueName, "instructor": self.instructor, "room": self.room}
+                {"name": self.classNumber, "instructor": self.instructor, "room": self.room}
 
     def getJson( self ):
-        return {  "unique_name": self.uniqueName,
-                "section_num": self.sectionNum,
-                "instructor": self.instructor,
-                "room": self.room,
-                "campus": self.campus,
-                "offerings":   [e.getJson() for e in self.offerings],
-                "related1" : self.related1,
-                "related2" : self.related2,
-                "date_string" : self.dateString
+        if self.building and self.room:
+            buildingRoom = "%s %s" % (self.building, self.room)
+        else:
+            buildingRoom = ""
+
+        return { "class_number":   self.classNumber,
+                 "section_num":   self.sectionNum,
+                 "instructor":    self.instructor,
+                 "building_room": buildingRoom,
+                 "campus":        self.campus,
+                 "offerings":     [e.getJson() for e in self.offerings],
+                 "related1" :     self.related1,
+                 "related2" :     self.related2,
+                 "date_string":   self.dateString,
+                 "enrollment":    "%s / %s" % (self.enrlTot, self.enrlCap)
             } 

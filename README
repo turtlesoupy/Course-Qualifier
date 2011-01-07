@@ -8,6 +8,8 @@ Usage:
     - Ensure that the databases are writable by the server process. Ensure that
       qualifyCGI.py and makePDFCalendarCGI.py are executable. Ensure that all 
       other files are 755
+    - Copy config/qualifier.cfg.example to config/qualifier.cfg and visit uwdata.ca
+      to get your own API key.
     - Check the shebang lines on qualifyCGI.py and makePDFCalendarCGI.py to make
       sure they point at a valid python installation
     - Visiting ROOT/index.html will make an AJAX request to one of the CGI
@@ -16,9 +18,6 @@ Usage:
         "python WaterlooStats.py -f 'outputfile.html'"
     
 Course qualifier depends on:
-    - BeautifulSoup (tested version 3.0.x - the developer considers the 3.1
-                     line a failed experiment. I've included a good version in
-                     the modules directory)
     - pysqlite2 (tested version 2.5.5)
     - ReportLab (tested version 2.4)
     - simplejson (tested version 2.1.x)

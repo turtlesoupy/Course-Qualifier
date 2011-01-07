@@ -11,9 +11,7 @@ import WaterlooCatalog
 import WaterlooCourseSection
 import QualifierExceptions
 from operator import attrgetter
-from WaterlooCourseParser import WaterlooCourseParser
-from BeautifulSoup import BeautifulSoup
-from BeautifulSoup import NavigableString
+from WaterlooCourse import WaterlooCourse
 
 TOO_MANY_COMBINATIONS = 5000
 TOO_MANY_SEARCH_COMBINATIONS = 10000
@@ -33,17 +31,18 @@ def cross(*args):
     return ans
 
 class WaterlooDesiredCourse:
-    def __init__( self, courseSubject, courseCode, options ):
-        self.subject = courseSubject.upper().strip()
-        self.code = courseCode.upper().strip()
-        self.options = options
-        if (len(self.code) > 0 and self.code[-1] == "*"):
-            self.doSearch = True
-            self.code = self.code[:-1]
-        else:
+    directRE = re.compile(r"\s*([A-Za-z]+)\s*(\d\d\d\w*)")
+    def __init__(self, courseQuery, options):
+        self.query = courseQuery.strip()
+        m = self.directRE.match(courseQuery)
+        if m:
+            self.subject = m.group(1).upper()
+            self.code    = m.group(2).upper()
             self.doSearch = False
-            if len( self.code ) < 3:
-                raise QualifierExceptions.InvalidInput()
+        else:
+            self.doSearch = True
+
+        self.options = options
 
     def __cmp__( self, other ):
         return cmp(str(self), str( other ) )
@@ -51,36 +50,10 @@ class WaterlooDesiredCourse:
     def __hash__( self ):
         return hash(str( self ))
 
-    def __str__( self ):
-        return "%s %s" % ( self.subject, self.code )
-
-class HTMLFetchThread( threading.Thread ):
-    def __init__(self, postURL, session, course, graduate=False):
-        self.postURL = postURL
-        self.session = session
-        self.course = course
-        self.graduate = graduate
-        self.html = ""
-        threading.Thread.__init__( self )
-
-    def run( self ):
-        params = urllib.urlencode({
-                    "level": self.graduate and "grad" or "under",
-                    "sess": self.session,
-                    "subject": self.course.subject,
-                    "cournum": self.course.code
-                    })
-        f = urllib.urlopen(self.postURL, params)
-        try:
-            html = f.read()
-        finally:
-            f.close()
-        
-        self.html = html
-
+    def __str__(self):
+        return self.query
+    
 class WaterlooDispatcher(object):
-    postURL = "http://www.adm.uwaterloo.ca/cgi-bin/cgiwrap/infocour/salook.pl"
-
     def __init__( self, requestDict):
         self.session = 0
         self.desiredCourses = []
@@ -97,14 +70,13 @@ class WaterlooDispatcher(object):
         seenCourses = set()
 
         if len( requestDict["courses"] ) > 15:
-            raise QualifierExceptions.QualifierException( "Too many courses - must be under 15 " )
+            raise QualifierExceptions.QualifierException("Too many courses - must be under 15")
 
         for course in requestDict["courses"]:
-            if len( course["course_subject"].strip() ) == 0 or len(course["course_code"].strip()) == 0:
+            if len(course["course_query"].strip()) == 0:
                 continue
-
             try:
-                realCourse = WaterlooDesiredCourse( course["course_subject"], course["course_code"], course["options"])
+                realCourse = WaterlooDesiredCourse(course["course_query"], course["options"])
             except QualifierExceptions.InvalidInput:
                 logging.warning( "Course not valid: %s %s (too short)" % ( course["course_subject"], course["course_code"] ) )
                 continue
@@ -113,42 +85,115 @@ class WaterlooDispatcher(object):
                 logging.info( "Skipping duplicate course %s", realCourse )
                 continue
 
-            seenCourses.add( realCourse )
-            self.desiredCourses.append( realCourse )
+            seenCourses.add(realCourse)
+            self.desiredCourses.append(realCourse)
 
         self.session = requestDict["term"]
 
+    def filterGroupOptions(self, courseGroup, courseOptions):
+        hasTutorials = courseOptions['tutorials']
+        hasTests     = courseOptions['tests']
+        hasOther     = courseOptions['other']
+
+        def courseWorks(c):
+            if c.type == "TUT" and not hasTutorials:
+                return False
+
+            if c.type == "TST" and not hasTests:
+                return False
+
+            if c.type not in ("TST", "TUT", "LEC") and not hasOther:
+                return False
+
+            return True
+
+        return [e for e in courseGroup if courseWorks(e)]
+
+    def groupHasRequiredSections(self, courseGroup, courseOptions):
+        requiredSections = set(e for e in courseOptions["sections"] if e)
+        for course in courseGroup:
+            goodSection = None
+            for section in course.sections:
+                if section.sectionNum in requiredSections:
+                    goodSection = section
+            if goodSection:
+                course.sections = [e for e in course.sections if e.sectionNum in requiredSections]
+
+            requiredSections -= set(e.sectionNum for e in course.sections )
+
+        return len(requiredSections) <= 0
+
+    def filterSections(self, sections):
+        ret = sections
+        if "show_full_courses" in self.options and self.options["show_full_courses"] == False:
+            ret = [e for e in ret if not e.full()]
+
+        if self.options["start_later_than_hour"] != "" and self.options["start_later_than_minute"] != "":
+            minTime = 60*60*int(self.options["start_later_than_hour"]) + 60*int(self.options["start_later_than_minute"] )
+            if self.options[ "start_later_than_hour" ] == "12":
+                minTime -= 12*60*60
+            if self.options['start_later_than_ampm'] == "PM":
+                minTime += 60*60*12 
+            ret = [e for e in ret if e.startsAfter(minTime)]
+        
+
+        if self.options["ends_earlier_than_hour"] != "" and self.options["ends_earlier_than_minute"] != "":
+            maxTime = 60*60*int(self.options["ends_earlier_than_hour"]) + 60*int(self.options["ends_earlier_than_minute"] )
+            if self.options[ "ends_earlier_than_hour" ] == "12":
+                maxTime -= 12*60*60
+            if self.options['ends_earlier_than_ampm'] == "PM":
+                maxTime += 60*60*12
+            ret = [e for e in ret if e.endsEarlier(maxTime)]
+
+        return ret
+
     def dispatch(self):
-        # Two types of queries - "CS 241" (to qualify) and "CS 2*" (to search)
-        toQualify = [] 
-        toSearch = []
+        toQualify  = [] 
+        toSearch   = []
         allCourses = []
 
-        for desiredCourse, courseObjects in self.getCourseObjects(self.desiredCourses):
-            #Add in "search courses"
+        for desiredCourse in self.desiredCourses:
             if desiredCourse.doSearch:
-                #A "course group" is something like [AMATH 250 TUT, AMATH 250 LEC]
-                #i.e. two 'courses' that have to be taken concurrently
-                groups = []
+                searchObjects = [self.filterGroupOptions(e, desiredCourse.options) \
+                        for e in WaterlooCourse.coursesFromSearch(desiredCourse.query, self.session)]
 
-                #Workaround - Waterloo's page returns too much for a match of "2*"
-                sortedCourse = sorted(
-                        (e for e in courseObjects if e.courseCode.startswith(desiredCourse.code)),
-                        key=attrgetter('courseName'))
-                for k,g in itertools.groupby(sortedCourse, attrgetter('courseName')):
-                    groups.append(list(g))
-                toSearch.append(groups)
+                for group in searchObjects:
+                    for course in group:
+                        course.sections = self.filterSections(course.sections)
+
+                filteredObjects = [g for g in searchObjects if all(len(c.sections) > 0 for c in g)]
+                if len(filteredObjects) == 0:
+                    raise QualifierExceptions.QualifierException("No courses found for query '%s' with given options" % desiredCourse.query)
+
+                #We get back something of the form[[AMATH 250 TUT, AMATH 250 LEC], [CS 245 LEC]]
+                toSearch.append(filteredObjects)
+                for courseGroup in filteredObjects:
+                    allCourses.extend(courseGroup)
             else:
-                toQualify.extend( courseObjects )
+                codeCourses  = WaterlooCourse.coursesFromCode(desiredCourse.subject, \
+                        desiredCourse.code, self.session)
 
-            allCourses.extend(courseObjects)
+                filteredCourses = self.filterGroupOptions(codeCourses, desiredCourse.options)
+                if len(filteredCourses) == 0:
+                    raise QualifierExceptions.QualifierException("No course matches filters for '%s'" % desiredCourse.query)
+
+                for course in filteredCourses:
+                    course.sections = self.filterSections(course.sections)
+                    if len(course.sections) == 0:
+                        raise QualifierExceptions.QualifierException("No sections found matching filters for '%s %s'" % (course.courseName, course.type))
+
+                if not self.groupHasRequiredSections(filteredCourses, desiredCourse.options):
+                    raise QualifierExceptions.MissingRequiredSectionsException()
+
+                toQualify.extend(filteredCourses)
+                allCourses.extend(filteredCourses)
 
         self.checkBlowup(toQualify, toSearch)
 
-        #Compute "CS 241" type courses
+        #Combinatorial combinations of all sections for _direct_ courses
         self.qualifyCourses(toQualify[:])
 
-        #Compute "CS 2*" type courses
+        #Special behaviour: add in search courses
         if len(toSearch) > 0:
             validCatalogs = self.qualifiedSectionList[:]
             self.qualifiedSectionList = []
@@ -159,7 +204,6 @@ class WaterlooDispatcher(object):
 
         return self.makeJson(allCourses)
 
-
     # Core algorithm for computing conflicts
     def qualifyCourses(self, remainingCourses, sectionAcc=[]):
         if len( remainingCourses ) == 0:
@@ -169,68 +213,14 @@ class WaterlooDispatcher(object):
             currentCourse = remainingCourses.pop()
             for currSection in currentCourse.sections:
                 for otherSection in sectionAcc:
-                    if currSection.conflictsWith( otherSection ):
-                        self.conflictingSections.add( (currSection, otherSection ) )
+                    if currSection.conflictsWith(otherSection):
+                        self.conflictingSections.add((currSection, otherSection))
                         break
                 else:
-                    self.qualifyCourses( remainingCourses[:], sectionAcc[:] + [currSection] )
+                    self.qualifyCourses(remainingCourses[:], sectionAcc[:] + [currSection]) 
+                    #Side effect! (beats constructing the object via return values in the recursion tree)
 
      
-    def threadedHTMLFetch(self, desiredCourses, graduate=False):
-        totalTimeout = 20.0
-        htmlThreads = []
-        htmlList = []
-
-        for desiredCourse in desiredCourses:
-            t = HTMLFetchThread(self.postURL, self.session, desiredCourse, graduate)
-            t.start()
-            htmlThreads.append(t)
-
-        for thread in htmlThreads:
-            startTime = time.time()
-            thread.join(totalTimeout)
-            totalTimeout -= (time.time() - startTime)
-            if totalTimeout <= 0:
-                break
-            
-            htmlList.append( thread.html )
-
-        if totalTimeout < 0:
-            raise QualifierExceptions.QualifierException( "Timeout when communicating to Waterloo servers \n Is the Waterloo website down?")
-
-        return htmlList
-
-
-    def getCourseObjects(self, desiredCourses):
-        courseObjects = []
-        possibleGradCourses = []
-
-        # First try to grab all the undergraduate level
-        undergradList = self.threadedHTMLFetch(desiredCourses, False)
-        for desiredCourse, html in zip(desiredCourses, undergradList):
-            parser = WaterlooCourseParser(desiredCourse.options, self.options)
-            try:
-                courses = parser.parseHTML(html)
-                #Fix for grad searches - 6* has to match start, if not try searching grad
-                if any(e.courseCode.startswith(desiredCourse.code) for e in courses):
-                    courseObjects.append((desiredCourse, parser.parseHTML(html)))
-                else:
-                    raise QualifierExceptions.CourseMissingException("Missing course")
-            except QualifierExceptions.CourseMissingException:
-                possibleGradCourses.append(desiredCourse)
-
-        # Any that are missing will need a separate call to graduate courses
-        if len(possibleGradCourses) > 0:
-            gradList = self.threadedHTMLFetch(possibleGradCourses, True)
-            for desiredCourse, html in zip(possibleGradCourses, gradList):
-                parser = WaterlooCourseParser(desiredCourse.options, self.options)
-                try:
-                    courseObjects.append((desiredCourse, parser.parseHTML(html)))
-                except QualifierExceptions.CourseMissingException:
-                    logging.warning("Unable to find any courses to match %s %s" % (desiredCourse.subject, desiredCourse.code ))
-
-        return courseObjects
-
     def checkBlowup(self, courses, searchList):
         #Abort if we will never finish qualifying (blow-up)
         numClasses = 1
@@ -245,17 +235,15 @@ class WaterlooDispatcher(object):
         if numClasses > TOO_MANY_SEARCH_COMBINATIONS:
             raise QualifierExceptions.TooManySchedulesException( numClasses )
 
-
     def checkCatalog(self, catalog):
         if "obey_related" in self.options and self.options["obey_related"]:
-            requiredSections =  set( "%s %s" % (e.parent.courseName, e.related1) for e in catalog if e.related1 and e.related1 != '99')
-            requiredSections |= set( "%s %s" % (e.parent.courseName, e.related2) for e in catalog if e.related2 and e.related2 != '99')
-            hasSections = set( "%s %s" % ( e.parent.courseName, e.sectionNum) for e in catalog )
+            requiredSections  = set("%s %s" % (e.parent.courseName, e.related1) for e in catalog if e.related1 and e.related1 != '99')
+            requiredSections |= set("%s %s" % (e.parent.courseName, e.related2) for e in catalog if e.related2 and e.related2 != '99')
+            hasSections = set("%s %s" % ( e.parent.courseName, e.sectionNum) for e in catalog)
             
             if len(requiredSections - hasSections) > 0:
                 for section in requiredSections - hasSections:
                     self.conflictingMessages.append( "Catalog lacks required section %s" % section )
-
                 return False
 
         return True

@@ -1,5 +1,14 @@
 Changelog:
 ---------------------
+/ January 6, 2011    /
+---------------------
+- Changed data backend to use uwdata.ca
+- Changed search courses from wildcards to full text searches through uwdata.ca
+  (still needs some tweaking)
+- You now search with a single textbox instead of two (so you can enter full
+  text searches)
+
+---------------------
 / November 4, 2010   /
 ---------------------
 - Fixed more Dubai campus troubles

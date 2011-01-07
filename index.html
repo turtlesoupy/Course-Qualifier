@@ -66,15 +66,12 @@
             <input type="hidden" name="school" value="waterloo" />
             Term:
             <select class="term" name="term">
-                <option value="1085">Spring 2008</option>
-                <option value="1089">Fall 2008</option>
-                <option value="1091">Winter 2009</option>
-                <option value="1095">Spring 2009</option>
                 <option value="1099">Fall 2009</option>
                 <option value="1101">Winter 2010</option>
-		<option value="1105">Spring 2010</option>
-		<option value="1109" selected="selected">Fall 2010</option>
-		<option value="1111">Winter 2011</option>
+                <option value="1105">Spring 2010</option>
+                <option value="1109">Fall 2010</option>
+                <option value="1111" selected="selected">Winter 2011</option>
+                <option value="1115">Spring 2011</option>
             </select>
 
             <a href="advanced" id="advanced_options_toggle">Advanced Options...</a>
@@ -82,8 +79,7 @@
             <br />
             <div id="course_list">
                 <div class="course">
-                    Course:    <input type="text" class="course_subject" name="course_subject" value="CS" />
-                               <input type="text" class="course_code" name="course_code" value="245" />
+                    Course: <input type="text" class"course_query" name="course_query" value="CS 245" />
                     <span class="options">
                         Tutorials: <input type="checkbox" class="tutorials" name="tutorials" checked="checked" />
                         Tests:     <input type="checkbox" class="tutorials" name="tests" />
@@ -97,8 +93,7 @@
                     </span>
                 </div>
                 <div class="course">
-                    Course:    <input type="text" class="course_subject" name="course_subject" value="" />
-                               <input type="text" class="course_code" name="course_code" value="" />
+                    Course: <input type="text" class"course_query" name="course_query" value="" />
                     <span class="options">
                         Tutorials: <input type="checkbox" class="tutorials" name="tutorials" checked="checked" />
                         Tests:     <input type="checkbox" class="tutorials" name="tests" />
@@ -112,8 +107,7 @@
                     </span>
                 </div>
                 <div class="course">
-                    Course:    <input type="text" class="course_subject" name="course_subject" value="" />
-                               <input type="text" class="course_code" name="course_code" value="" />
+                    Course: <input type="text" class"course_query" name="course_query" value="" />
                     <span class="options">
                         Tutorials: <input type="checkbox" class="tutorials" name="tutorials" checked="checked" />
                         Tests:     <input type="checkbox" class="tutorials" name="tests" />
@@ -127,8 +121,7 @@
                     </span>
                 </div>
                 <div class="course">
-                    Course:    <input type="text" class="course_subject" name="course_subject" value="" />
-                               <input type="text" class="course_code" name="course_code" value="" />
+                    Course: <input type="text" class"course_query" name="course_query" value="" />
                     <span class="options">
                         Tutorials: <input type="checkbox" class="tutorials" name="tutorials" checked="checked" />
                         Tests:     <input type="checkbox" class="tutorials" name="tests" />
@@ -142,8 +135,7 @@
                     </span>
                 </div>
                 <div class="course">
-                    Course:    <input type="text" class="course_subject" name="course_subject" value="" />
-                               <input type="text" class="course_code" name="course_code" value="" />
+                    Course: <input type="text" class"course_query" name="course_query" value="" />
                     <span class="options">
                         Tutorials: <input type="checkbox" class="tutorials" name="tutorials" checked="checked" />
                         Tests:     <input type="checkbox" class="tutorials" name="tests" />
@@ -286,7 +278,7 @@
       <br /><a href="http://uwaterloo.ca/"><img src="images/uwlogo.jpg" border="0" style="float:right; margin-top:-40px;" alt="UW"/></a>
       <p>&copy; 2010 <a href="http://www.thomasdimson.com/">Thomas Dimson</a>, design by <a href="http://donmckenzie.ca/">Don McKenzie</a>
       <span class="noemphasis">
-      Last updated October 21, 2010 (data updated on-demand) - <a href="changelog.txt">Changelog</a> </span>
+          Last updated January 6, 2011 (data updated with <a href="http://www.uwdata.ca">uwdata.ca</a>) - <a href="changelog.txt">Changelog</a> </span>
 
       </p>
     </div>
@@ -294,14 +286,12 @@
 
 <div id="advanced_options" style="visibility:hidden;">
     <table class="advanced_options_table">
-    <tr>
-        <td>Obey related sections:</td>
-        <td><input type="checkbox" id="obey_related" class="obey_related" name="obey_related" /></td>
-    </tr>
+    <!--
     <tr>
         <td>Show distance education courses:</td>
         <td><input type="checkbox" id="show_distance_ed" class="show_distance_ed" name="show_distance_ed" /></td>
     </tr>
+    -->
     <tr>
         <td>Show full courses:</td>
         <td><input type="checkbox" id="show_full_courses" class="show_full_courses" name="show_full_courses" checked="checked" /></td>

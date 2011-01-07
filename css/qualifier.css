@@ -256,14 +256,14 @@ span.noemphasis {
 {
 }
 
-.course_detail_description
+.course_detail_title
 {
     font-style: italic;
     font-size: 8pt;
     margin-bottom: 0.5em;
 }
 
-.course_detail_title
+.course_detail_name
 {
     font-weight: bold;
     font-size: 12pt;

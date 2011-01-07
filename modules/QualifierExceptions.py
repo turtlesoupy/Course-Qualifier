@@ -13,14 +13,8 @@ class TooManySchedulesException( QualifierException ):
         return { "name" : self.__class__.__name__,
                  "numClasses" : self.numClasses }
 
-class InvalidInput( QualifierException ):
-    pass
-
-class MissingRequiredSectionsException( QualifierException ):
-    pass
-
-class CourseMissingException(QualifierException):
-    pass
-
-class FailedPrecheckException( QualifierException ):
-    pass
+class InvalidInput(QualifierException): pass
+class MissingRequiredSectionsException(QualifierException): pass
+class CourseMissingException(QualifierException): pass
+class DataError(QualifierException): pass
+class FailedPrecheckException( QualifierException ): pass
