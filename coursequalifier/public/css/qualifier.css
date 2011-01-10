@@ -1,0 +1,408 @@
+body {
+    text-align:center;
+    font-family:Arial, Helvetica, sans-serif;
+    font-size:0.9em;
+    margin:0;
+    padding:0;
+    background-color:#646890;
+}
+
+#headerImage h1, #headerImage h2 {
+    display: none;
+}
+
+#headerImage a {
+    background-image:url('/images/logo.png');
+    background-position:center top;
+    background-repeat:no-repeat;
+    display:block;
+    height:0;
+    overflow: auto;
+    margin-left:auto;
+    margin-right:auto;
+    overflow:hidden;
+    padding-top:146px;
+    width:350px;
+    float: left;
+}
+
+p.introText {
+        margin: 0;
+        color: #0080c3;
+        padding:42px 0 10px 0;
+}
+
+p.emailText {
+        color: #0080c3;
+        padding: 0;
+        margin: 0;
+}
+
+p.introText em {
+        background-color:#ffc;
+        font-style:normal;
+}
+
+html .fb_share_button { height:15px; margin-left: 10px; padding-left: 20px; border:0px solid #d8dfea; background:url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?10:26981) no-repeat center left; }
+
+html .fb_share_button:hover { color:#a0a0a0; margin-left: 10px; border-color:#295582; background: url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?10:26981) no-repeat center left; }
+
+
+#container {
+    width:100%;
+    background: #FFFFFF url(/images/bg2.png) repeat-x scroll left top;   
+    padding-bottom: 20px;
+}
+
+.wrap{
+    margin: 0 auto;
+    width: 820px;
+    text-align: left;
+}
+
+
+/* ------------------
+    BODY !!!!!
+*/
+
+#courseList {
+    margin-top: 1em;
+}
+
+#too_many_explanation {
+    border: 1px solid #c93;
+    padding: 10px 12px;
+    background: #ffc;
+    width: 80%;
+    display:none;
+}
+
+#too_many_explanation h3 {
+    color: black;
+    font-size: 18pt;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#too_many_explanation .fine_print {
+    font-size: 8pt;
+}
+
+#too_many_number {
+}
+
+h2 {
+    color: #0080c3;
+    font-size: 1.5em;
+    margin:  .75em 0;
+}
+
+.course_subject {
+    width: 8em;
+}
+.course_code {
+    width: 3em;
+}
+
+.course_section {
+    width: 3em;
+}
+
+.options{
+    visibility: hidden;
+}
+
+/* The hint A6C2E7*/
+.hint {
+    position: relative;
+    width: 350px;
+    border: 1px solid #c93;
+    padding: 10px 12px;
+    background: #ffc;
+        float:right;
+}
+
+/* The pointer image is added by using another span */
+.hint .hint-pointer {
+    position: absolute;
+    left: -10px;
+    top: 5px;
+    width: 10px;
+    height: 19px;
+    background: url(../images/pointer.gif) left top no-repeat;
+}
+
+.course {
+    margin-top: 0.2em;
+}
+
+.courseCode {
+    width: 5em; 
+    margin-right: 10pt !important;
+}
+
+.courseSubject {
+    position: relative;
+    top: 1px; /* damn dojo */
+    width: 8em;
+}
+
+.courseOptionLabel {
+    margin-right: 10pt;
+}
+
+
+/* --------------------
+    Footer!!!!!
+*/
+
+#footer {
+    padding-top: 20px;
+    border-top: 2px solid #c0c0c0;
+    background: url(../images/littleback.jpg) repeat-x scroll left top;    
+    height: 325px;
+    color:white;
+    font-size: 0.9em;
+    line-height: 1.3em;
+}
+
+#footer h2 {
+    margin:0;
+    border-bottom: 1px solid white;
+    font-weight:normal;
+    font-size: 1.2em;
+    color:white;
+}
+
+#footer .help {
+    width: 48%;
+    float:left;
+}
+
+
+#footer .meta {
+    width: 48%;
+    float: right;
+}
+
+#footer a, #footer a:link, #footer a:visited {
+    text-decoration:underline;
+    color:#e0e0e0;
+}
+
+#footer a:hover {
+    color:#fff;
+}
+
+.uwlogo {
+    float:right; 
+    margin-top:-40px;
+    border: 0;
+}
+
+
+a, a:visited, a:active {
+    color: #0080c3;
+    text-decoration:underline;
+}
+
+span.noemphasis {
+    font-size: 0.7em;
+}
+
+
+.catalogGridSection {
+    float: left;
+    font-size: 0.9em;
+    vertical-align: middle;
+    border: 1px solid black;
+    width: 12em;
+    text-align: center;
+
+}
+
+#calendarTable {
+    border: 1px solid black;
+    font-family:Lucida Grande,Verdana;
+    text-align:center;
+    font-size:0.8em;
+    table-layout: fixed;
+    width: 100%;
+    margin: 0pt;
+    padding: 0pt;
+}
+
+
+#calendarTable th {
+    font-weight: bold;
+    text-align: center;
+    width: 12%;
+    height: 3em;
+    background: #D8D8DA url(/images/sprite.png) repeat-x scroll 0 0
+}
+
+#calendarTable td {
+    white-space: nowrap;
+    overflow: hidden;
+    vertical-align: top;
+    height: 18px;
+}
+
+.time {
+    text-align:center;
+    background: #F0F0F0;
+}
+.empty {
+    border-bottom:1px solid #F0F0F0;
+    border-right:1px solid #F0F0F0;
+    text-align: center;
+}
+
+.course_detail_list
+{
+}
+
+.course_detail_title
+{
+    font-style: italic;
+    font-size: 8pt;
+    margin-bottom: 0.5em;
+}
+
+.course_detail_name
+{
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+.course_details
+{
+    float:left;
+    margin-right: 20px;
+    width: 210px;
+    height: 170px;
+}
+
+.clear
+{
+    clear: both;
+}
+
+.metric_detail_list
+{
+
+}
+
+.course_detail_header
+{
+    
+}
+
+#create_pdf_div
+{
+    margin-bottom: 10px;
+}
+
+#qualifier_grid td
+{
+    text-align: center;
+}
+
+#row_select
+{
+    width: 100%;
+    text-align: right;
+}
+
+.row_select_info
+{
+    font-weight: bold;
+    margin-right: 1em;
+}
+
+#qualifier_grid table
+{
+    width: 100%;
+}
+
+#yui-dt0-bodytable, #yui-dt1-bodytable, #yui-dt2-bodytable {
+width:100%;
+} 
+
+/* Options CSS */
+.required_sections
+{
+    width: 40px; 
+}
+
+#advanced_options 
+{
+    color: black;
+    text-align: left;
+}
+
+.advanced_options_table td
+{
+    vertical-align: top;
+}
+
+
+
+.bigText 
+{
+    font-weight: bold;
+}
+
+/* Class colours, I wish there was a better way of doing this */
+
+.classNum0 {
+    background: #DEDEFF;        
+}
+.classNum1 {
+    background: #FFEEDE;
+}
+.classNum2 {
+    background: #DEFFFE;        
+}
+.classNum3 {
+    background: #FFDEF0;        
+}
+.classNum4 {
+    background: #E0FFDE;        
+}
+.classNum5 {
+    background: #ECDEFF;        
+}
+.classNum6 {
+    background: #FFFCDE;        
+}
+.classNum7 {
+    background: #DEF1FF;        
+}
+.classNum8 {
+    background: #FFDEE1;        
+}
+.classNum9 {
+    background: #DEFFEC;        
+}
+.classNum10 {
+    background: #FCDEFF;        
+}
+.classNum11 {
+    background: #F1FFDE;        
+}
+.classNum12 {
+    background: #FABEDC;        
+}
+.classNum13 {
+    background: #FABECD;        
+}
+.classNum14 {
+    background: #FABEBE;        
+}
+.classNum15 {
+    background: #FACDBE;        
+}
+.classNum16 {
+    background: #FADCBE;        
+}
