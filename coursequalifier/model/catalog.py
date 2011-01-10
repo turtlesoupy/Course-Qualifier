@@ -13,9 +13,10 @@ def cartesian(*args):
 class CatalogCombinatorics(object):
     """Algorithm-object for doing actual 'course qualifying'."""
     def __init__(self, direct, searchGroups):
-        self.direct       = direct
-        self.searchGroups = searchGroups
-        self.output       = []
+        self.direct              = direct
+        self.searchGroups        = searchGroups
+        self.output              = []
+        self.conflictingSections = []
 
     def computeSections(self):
         self.computeInternal(self.direct)
@@ -42,24 +43,40 @@ class CatalogCombinatorics(object):
 
     def computeInternal(self, remainingCourses, sectionAcc=[]):
         if len(remainingCourses) == 0:
-            if len(sectionAcc) > 0: #and self.checkCatalog(sectionAcc):
-                self.output.append(sectionAcc)
+            if len(sectionAcc) > 0:
+                self.output.append(sectionAcc) #Side effect!
         else:
             currentCourse = remainingCourses.pop()
             for currSection in currentCourse.sections:
                 for otherSection in sectionAcc:
                     if currSection.conflictsWith(otherSection):
-                        #self.conflictingSections.add((currSection, otherSection))
+                        self.conflictingSections.append((currSection, otherSection))
                         break
                 else:
                     self.computeInternal(remainingCourses[:], sectionAcc[:] + [currSection])
 
 class Catalog(object):
     @classmethod
+    def searchSpaceCount(cls, directCourses, searchGroups):
+        if len(directCourses) == 0 and len(searchGroups) == 0:
+            return 0
+
+        if len(directCourses) > 0:
+            numCatalogs = reduce(lambda x,y: x * y, (len(e.sections) \
+                    for e in directCourses if len(e.sections) > 0))
+        else:
+            numCatalogs = 1
+
+        for courseOption in searchGroups:
+            numClasses *= sum(sum(len(c.sections) for c in courseGroup) for courseGroup in searchGroups)
+
+        return numCatalogs
+
+    @classmethod
     def computeAll(cls, directCourses, searchGroups):
         c = CatalogCombinatorics(directCourses, searchGroups)
         c.computeSections()
-        return [cls(e) for e in c.output]
+        return ([cls(e) for e in c.output], c.conflictingSections)
 
     def __init__(self, sections):
         self.sections = sections

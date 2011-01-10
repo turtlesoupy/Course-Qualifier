@@ -41,10 +41,10 @@
         <div id='headerImage'> <a href="index.html"> <span class="hide"> </span> </a> <h1> Waterloo Course Qualifier </h1><h2> Better than Quest </h2> </div>
         <div class="infobox">
                 <p class="introText">
-                The Course Qualifier helps you generate all possible course timetables without time conflicts. You can choose a path that allows you to make the  <em>most efficient</em> use of your time. 
+                The Course Qualifier helps you generate all possible course timetables without time conflicts. You can choose a path that allows you to make the <em>most efficient</em> use of your time. 
                 </p>
                 <p class="emailText">
-                Source now available on <a href="http://github.com/cosbynator/Course-Qualifier">github</a>
+                Source now available on <a href="http://github.com/cosbynator/Course-Qualifier">github</a>. <a href="http://develop.feds.ca/projects/course-qualifier">Project issues</a> on Feds SDN.
 		<br />
 		<br />
                 <script>function fbs_click() {u=location.href;t=document.title;window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent(u)+'&t='+encodeURIComponent(t),'sharer','toolbar=0,status=0,width=626,height=436');return false;}</script><style> html .fb_share_link { padding:2px 0 0 20px; height:16px; background:url(http://static.ak.fbcdn.net/images/share/facebook_share_icon.gif?2:26981) no-repeat top left; }</style><a href="http://www.facebook.com/share.php?u=http://www.coursequalifier.com" onclick="return fbs_click()" target="_blank" class="fb_share_link">Facebook</a>, 
@@ -146,6 +146,9 @@
         <div id="info_area">
         </div>
 
+        <div id="trace_area">
+        </div>
+
         <div id="error_area">
         </div>
 
@@ -159,42 +162,44 @@
         </div>
 
 
-        <h2> Select a course sequence: </h2>
-        <a href="" id="show_conflicts"></a> <span id="show_conflicts_number"></span>
-        <div id="conflict_area">
-        </div>
-
-        <div id="qualifier_grid">
-            Awaiting course selection... 
-        </div>
-
-        <a name="qualify_calendar_anchor"></a>
-        <h2> Course timetable / details: </h2>
-        <div id="create_pdf_div" style="display:none;"> 
-            <a href="" id="create_pdf"><img src="/images/pdf.png" border="0" /> PDF Version (Printable)</a>
-            <br />
-        </div>
-        <div id="qualifier_calendar">
-            Awaiting row selection... 
-        </div>
-
-        <div id="row_select" style="display: none;">
-            <div class ="row_select_info">
-                Row: <span id="row_select_number"></span> <br />
+        <div id="result_area">
+            <h2> Select a course sequence: </h2>
+            <a href="" id="show_conflicts"></a> <span id="show_conflicts_number"></span>
+            <div id="conflict_area">
             </div>
-            <a href="" id="select_previous_row">Previous</a> | 
-            <a href="" id="select_next_row">Next</a>
-        </div>
-        <div id="catalog_information">
 
-        </div>
-        <div class="clear"> </div>
-        <br />
-        <br />
+            <div id="qualifier_grid">
+                Awaiting course selection... 
+            </div>
 
-        <form name="pdf_form" target="_blank" action="/schedule/pdf" method="POST">
-        <input type="hidden" name="ugly_url" />
-        </form>
+            <a name="qualify_calendar_anchor"></a>
+            <h2> Course timetable / details: </h2>
+            <div id="create_pdf_div" style="display:none;"> 
+                <a href="" id="create_pdf"><img src="/images/pdf.png" border="0" /> PDF Version (Printable)</a>
+                <br />
+            </div>
+            <div id="qualifier_calendar">
+                Awaiting row selection... 
+            </div>
+
+            <div id="row_select" style="display: none;">
+                <div class ="row_select_info">
+                    Row: <span id="row_select_number"></span> <br />
+                </div>
+                <a href="" id="select_previous_row">Previous</a> | 
+                <a href="" id="select_next_row">Next</a>
+            </div>
+            <div id="catalog_information">
+
+            </div>
+            <div class="clear"> </div>
+            <br />
+            <br />
+
+            <form name="pdf_form" target="_blank" action="/schedule/pdf" method="POST">
+            <input type="hidden" name="ugly_url" />
+            </form>
+        </div>
     </div>
 </div>
 
@@ -203,17 +208,20 @@
     <div class="help">
       <h2>How to use Course Qualifier</h2>
       <br />
-      Relatively simple:
+      Simple:
         <ol>
         <li> Pick some courses you might wish to take from the <a href="http://ugradcalendar.uwaterloo.ca/">Undergraduate Course Calendar</a> </li>
-        <li> From the course qualifier, pick your term (Winter 2010, etc.) </li>
+        <li> From the course qualifier, pick your term (Winter 2011, etc.) </li>
 
         <li> Enter your course subject followed by course number (ex. AMATH 250)
-        <li> Toggle tutorial slots, other slots (ex. Discussions) </li>
         <li> Press <em>Make it so</em> and sort by a desired column </li>
 
         <li> Highlight the row of your course sequence and click. Mysteriously, a possible schedule appears!</li>
     </ol>
+
+    <p>
+    Want more control? Toggle <em>Advanced Options</em>! 
+    </p>
 
     <p>
         Too many results? Filter some out! <br />
@@ -226,14 +234,12 @@
         Statisfied with your schedule? Make a PDF out of it by clicking "PDF Version".
     </p>
 
-    <p>
-         What are others taking? View the <a href="waterlooStats.html">statistics</a>!
-    </p>
     </div>
 
     <div class="meta">
       <h2>About Course Qualifier</h2>
-      <p> The course qualifier is a <s>quick</s> longish moderately filthy <a href="http://www.python.org/">Python</a> script. Originally, it was a bit of a hack but it has been maintained very passively since April 2007 since people seem to like it. </p>
+      <p> The course qualifier is a <s>quick</s> longish <a href="http://www.python.org/">Python</a> service using the <a href="http://http://pylonshq.com/">Pylons</a> framework.
+      Originally, it was a bit of a hack but it has been maintained very passively since April 2007 since people seem to like it. </p>
 
       The table fields are as follows:
       <ul>
@@ -250,7 +256,7 @@
       <p> Despite my best efforts, there is no foolproof method of preventing bad schedules, profs, early mornings, confusing non-sequiturs or Urkel. </p>
       <p>To the best of my knowledge, this is not official University of Waterloo software. </p>
       <br /><a href="http://www.uwaterloo.ca/">${h.image("/images/uwlogo.jpg", "UW", class_="uwlogo")}</a>
-      <p>&copy; 2010 <a href="http://www.thomasdimson.com/">Thomas Dimson</a>, design by <a href="http://donmckenzie.ca/">Don McKenzie</a>
+      <p>&copy;2011 <a href="http://www.thomasdimson.com/">Thomas Dimson</a>, design by <a href="http://donmckenzie.ca/">Don McKenzie</a>
       <span class="noemphasis">
           Last updated January 6, 2011 (data updated with <a href="http://www.uwdata.ca">uwdata.ca</a>) - <a href="changelog.txt">Changelog</a> 
       </span>

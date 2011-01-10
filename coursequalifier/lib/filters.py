@@ -59,7 +59,5 @@ class RequiredSectionsFilter(CatalogFilter):
 
     def passes(self, catalog):
         scopedNums = set(e.sectionNum for e in catalog.sections if e.courseName in self.courseNames)
-        print scopedNums
-        print self.requiredSectionNumbers
         return len(self.requiredSectionNumbers - scopedNums) == 0
 

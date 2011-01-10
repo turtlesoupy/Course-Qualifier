@@ -24,7 +24,6 @@ def pullSearchCourses(query):
     )
 
 def getJSONFromPath(basePath, query=[]):
-    print config['uwdata.address']
     connection = HTTPConnection(config['uwdata.address'])
 
     path = "%s?key=%s%s" %  \
@@ -42,6 +41,8 @@ def getJSONFromPath(basePath, query=[]):
         if 'text' in data['error']:
             text = data['error']['text']
             if text == "Unknown course":
+                raise CourseMissingException()
+            elif text == "No courses found":
                 raise CourseMissingException()
             else:
                 raise UWDataError(data['error']['text'])

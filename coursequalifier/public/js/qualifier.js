@@ -296,15 +296,12 @@ function getCoursesObject() {
     
     var courses = [];
     var course_nodes = Dom.getElementsByClassName( "course", null, course_form );
-    for( var i = 0; i < course_nodes.length; i++ )
-    {
+    for(var i = 0; i < course_nodes.length; i++) {
         courseObject = serializeFromRoot( course_nodes[i], true );
         optionsSpan = Dom.getChildrenBy( course_nodes[i], function(e) { return e.className == "options"; } )[0]
         courseObject["options"] = serializeFromRoot( optionsSpan, false );
-
         courses.push( courseObject );
     }
-    
 
     return courses;
 }
@@ -345,11 +342,9 @@ function serializeFromRoot(root, first_level) {
         var select = selectElements[i];
         var selectChildren = select.getElementsByTagName( "option" );
 
-        for( var j =0;j < selectChildren.length; j++ )
-        {
+        for(var j =0;j < selectChildren.length; j++) {
             var option = selectChildren[j];
-            if( option.selected  )
-            {
+            if(option.selected) {
                 options[ select.name ] = option.value;
             }
         }
@@ -373,18 +368,16 @@ function submitCourses(e)  {
         "courses": getCoursesObject()
     };
 
-    document.getElementById("error_area").innerHTML = "";
-    document.getElementById("info_area").innerHTML = "";
+    document.getElementById("error_area").style.display = "none";
+    document.getElementById("trace_area").style.display = "none";
+    document.getElementById("result_area").style.display = "none";
     document.getElementById("too_many_explanation").style.display = "none";
-    document.getElementById( "row_select" ).style.display = "none";
-    document.getElementById( "show_conflicts" ).innerHTML = "";
-    document.getElementById( "show_conflicts_number" ).innerHTML = "";
+    document.getElementById("row_select").style.display = "none";
+    document.getElementById("show_conflicts").innerHTML = "";
+    document.getElementById("show_conflicts_number").innerHTML = "";
 
     showLoadingDialog();
     hideConflicts();
-    hideCalendar();
-    hideCatalogInformation();
-    hideQualifierGrid();
     var pdfDiv = document.getElementById("create_pdf_div");
     pdfDiv.style.display = "none";
     qualifyRequest = YAHOO.util.Connect.asyncRequest('POST', "/schedule/compute_all", 
@@ -403,23 +396,28 @@ function displayInfo(infoString) {
 function displayErrorHTML(errorHTML) {
     var errorArea = document.getElementById( "error_area" );
     errorArea.innerHTML = errorHTML;
+    errorArea.style.display = "block";
 }
 
 function displayError(errorString) {
     var errorArea = document.getElementById( "error_area" );
     errorArea.innerHTML = "Errors: <br />" + errorString.replace(/ /g, "&nbsp;" ).replace( /\n/g, "<br />" );
+    errorArea.style.display = "block";
 }
 
-function handleQualifierException(exception) {
-    if(exception.name == "TooManySchedulesException") {
-        var tooManyArea = document.getElementById( "too_many_explanation" );
-        var tooManyNumber = document.getElementById( 'too_many_number' );
-
-        tooManyNumber.innerHTML =  exception.numClasses;
+function handleQualifierError(error) {
+    if(error.type == "large_search_space") {
+        var tooManyArea   = document.getElementById("too_many_explanation");
+        var tooManyNumber = document.getElementById('too_many_number');
+        tooManyNumber.innerHTML   = error.size;
         tooManyArea.style.display = "block";
-    }
-    else {
-        displayError( exception.string );
+    } else if(error.type == "no_query_results") {
+        displayErrorHTML("<h3>No Results</h3> Your query of '" + error.query + "' returned no results.");
+    } else if(error.type == "uwdata") {
+        displayErrorHTML("<h3>Backend Error</h3> An error occurred in data backend, uwdata.ca, for query '" + error.query + "'." + 
+                " This could be because uwdata.ca is down or because it has a bug.");
+    } else {
+        displayError(YAHOO.lang.dump(error));
     }
 }
 
@@ -435,41 +433,27 @@ function qualifyCallback(response) {
     }
 
     if(data.error != undefined) {
-        displayError( data.error );
-    }
-
-    if(data.exception != undefined) {
-        handleQualifierException( data.exception );
+        handleQualifierError(data.error);
+        return;
     }
 
     if(data.error == undefined && data.exception == undefined) {
-        var info = data.info;
-        info = ""; // FIXME
         toggleConflicts.conflicts = data.result.conflicts;
-        if( data.result.conflicts.courses.length > 0 ) {
+        if(data.result.conflicts.length > 0 ) {
             var showConflictsText = document.getElementById( "show_conflicts" );
             var showConflictsNumber = document.getElementById( "show_conflicts_number" ); 
             showConflictsText.innerHTML = "Show conflicting courses";
-            showConflictsNumber.innerHTML = "(" + data.result.conflicts.courses.length  + ")";
+            showConflictsNumber.innerHTML = "(" + data.result.conflicts.length  + ")";
         }
-
-        if( info != "" ) {
-            displayInfo( info );
-        }
-
         if(data.result.catalogs.length == 0) {
             displayError( "No valid schedules found" );
         }
         else {
             createQualifierGrid(data.result );
             selectFirstRow();
+            document.getElementById("result_area").style.display = "block";
         }
     }
-}
-
-function hideQualifierGrid()  {
-    var qualifierGridLocation = document.getElementById("qualifier_grid");
-    qualifierGridLocation.innerHTML = "";
 }
 
 function selectPreviousRow(e) {
@@ -598,11 +582,6 @@ function rowSelected(e, scrollToGrid ) {
     }
 }
 
-function hideCatalogInformation() {
-    var informationLocation = document.getElementById("catalog_information");
-    informationLocation.innerHTML = ""; 
-}
-
 function createPDF(e) {
     YAHOO.util.Event.preventDefault(e);
     var request = {
@@ -618,9 +597,7 @@ function createPDF(e) {
 function createCatalogInformation(rowData, sections, responseData) {
     var i;
     var informationLocation = document.getElementById("catalog_information");
-
-    
-    hideCatalogInformation();
+    informationLocation.innerHTML = ""; 
 
     var pdfDiv = document.getElementById("create_pdf_div");
     pdfDiv.style.display = "block";
@@ -665,15 +642,9 @@ function createCatalogInformation(rowData, sections, responseData) {
     informationLocation.appendChild( document.createElement( "br" ) );
 }
 
-function hideCalendar() {
-    var calendarLocation = document.getElementById("qualifier_calendar");
-    calendarLocation.innerHTML = "";
-}
-
 function createCalendar(courseData, sections) {
     var calendarLocation = document.getElementById("qualifier_calendar");
-
-    hideCalendar();
+    calendarLocation.innerHTML = "";
     
     var validDays = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
     var stepSize = 30*60;
@@ -785,8 +756,7 @@ function hideConflicts() {
     var conflictDiv = document.getElementById("conflict_area");
     var showConflictsText = document.getElementById( "show_conflicts" );
 
-    if( toggleConflicts.showing )
-    {
+    if(toggleConflicts.showing) {
         conflictDiv.innerHTML = ""; 
         showConflictsText.innerHTML = "Show conflicting courses";
         toggleConflicts.showing = false; 
@@ -800,9 +770,7 @@ function toggleConflicts(e) {
     if(toggleConflicts.conflicts == undefined) {
         return;   
     }
-    var conflictingCourses = toggleConflicts.conflicts.courses;
-    var conflictingMessages = toggleConflicts.conflicts.messages;
-
+    var conflictingCourses = toggleConflicts.conflicts;
     var conflictDiv = document.getElementById("conflict_area");
     var showConflictsText = document.getElementById( "show_conflicts" );
 
@@ -815,19 +783,10 @@ function toggleConflicts(e) {
             var course1 = conflictingCourses[i][0];
             var course2 = conflictingCourses[i][1];
 
-            var newText = document.createTextNode( course1.courseName + " (" + course1.sectionName + ")"
-                            + " conflicts with " + course2.courseName + " (" + course2.sectionName + ")" );
+            var newText = document.createTextNode( course1.courseName + " (" + course1.sectionNum + ")"
+                            + " conflicts with " + course2.courseName + " (" + course2.sectionNum + ")" );
             conflictDiv.appendChild( newText );
             conflictDiv.appendChild( document.createElement( "br" )  );
-        }
-
-        for(i = 0; i< conflictingMessages.length; i++) {
-            var message = conflictingMessages[i];
-
-            var newText = document.createTextNode( message );
-
-            conflictDiv.appendChild( newText );
-            conflictDiv.appendChild( document.createElement( "br" ) );
         }
 
         showConflictsText.innerHTML = "Hide conflicting courses";
@@ -838,7 +797,9 @@ function toggleConflicts(e) {
 function qualifyErrorCallback(response) {
    hideLoadingDialog();
    if(response.responseText && response.responseText != "") {
-        displayErrorHTML(response.responseText);
+        var traceArea = document.getElementById("trace_area");
+        traceArea.innerHTML = response.responseText;
+        traceArea.style.display = "block";
    } else {
         displayError( "Error communicating with server"); 
    }

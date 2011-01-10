@@ -1,7 +1,7 @@
 body {
     text-align:center;
-    font-family:Arial, Helvetica, sans-serif;
-    font-size:0.9em;
+    font-family: Verdana, Arial, sans-serif;
+    font-size:75%;
     margin:0;
     padding:0;
     background-color:#646890;
@@ -69,6 +69,22 @@ html .fb_share_button:hover { color:#a0a0a0; margin-left: 10px; border-color:#29
     margin-top: 1em;
 }
 
+#error_area {
+    border: 1px solid black;
+    padding: 10px 12px;
+    background: #800000;
+    width: 80%;
+    color: white;
+    display: none;
+}
+
+#error_area h3 {
+    font-size: 18pt;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
 #too_many_explanation {
     border: 1px solid #c93;
     padding: 10px 12px;
@@ -89,6 +105,10 @@ html .fb_share_button:hover { color:#a0a0a0; margin-left: 10px; border-color:#29
 }
 
 #too_many_number {
+}
+
+#result_area {
+    display: none;
 }
 
 h2 {
@@ -207,7 +227,7 @@ a, a:visited, a:active {
 }
 
 span.noemphasis {
-    font-size: 0.7em;
+    font-size: 0.8em;
 }
 
 
