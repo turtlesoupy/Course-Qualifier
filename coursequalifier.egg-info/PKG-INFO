@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: coursequalifier
+Version: 0.1dev
+Summary: Pylons application for computing non-conflicting schedules at Waterloo.
+Home-page: http://www.coursequalifier.com
+Author: Thomas Dimson
+Author-email: tdimson@gmail.com
+License: GPLv2
+Description: UNKNOWN
+Platform: UNKNOWN
