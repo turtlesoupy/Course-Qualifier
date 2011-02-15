@@ -1,8 +1,0 @@
-Options +ExecCGI -Indexes
-AddHandler cgi-script .py
-
-RewriteEngine on
-RewriteCond %{HTTP_HOST} ^192.168.*
-RewriteRule ^your_schedule\.pdf$ /~tdimson/coursequalifier.com/makePDFCalendarCGI.py [L,NC]
-
-RewriteRule ^your_schedule\.pdf$ makePDFCalendarCGI.py
