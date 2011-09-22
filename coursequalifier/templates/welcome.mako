@@ -68,8 +68,10 @@
                 <option value="1101">Winter 2010</option>
                 <option value="1105">Spring 2010</option>
                 <option value="1109">Fall 2010</option>
-                <option value="1111" selected="selected">Winter 2011</option>
+                <option value="1111">Winter 2011</option>
                 <option value="1115">Spring 2011</option>
+                <option value="1119">Fall 2011</option>
+                <option value="1121" selected="selected">Winter 2012</option>
             </select>
 
             <a href="advanced" id="advanced_options_toggle">Advanced Options...</a>
