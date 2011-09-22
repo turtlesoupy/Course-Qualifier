@@ -5,7 +5,7 @@ import logging
 from itertools import chain
 
 from pylons import request, response, session, tmpl_context as c, config
-from pylons.controllers.util import abort, redirect_to
+from pylons.controllers.util import abort
 
 from coursequalifier.lib.uwdata import CourseMissingException, UWDataError
 from coursequalifier.lib.base import BaseController, render
