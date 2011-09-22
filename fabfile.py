@@ -49,7 +49,7 @@ def pull():
 
 def install():
 	with cd(deploy_to[env.roles[0]]):
-		sudo('bin/pip install --upgrade ' + source_dir)
+		sudo('bin/pip install ' + source_dir)
 
 def restart():
 	with cd(deploy_to[env.roles[0]]):
